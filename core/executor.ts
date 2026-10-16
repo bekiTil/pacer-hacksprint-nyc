@@ -1,7 +1,8 @@
 // Owner: Yared (Engine). Cross-track export: executor (web /api/run, scripts/bench.ts).
-// Everyone imports `executor` from here. Until the 1:30 sync it delegates to the mock,
-// so the UI switches to the real engine with no code change on Bereket's side.
+// Everyone imports `executor` from here. Real engine since the 1:30 sync.
+// Set PACER_MOCK=1 to fall back to the mock (e.g. UI work without spending Bedrock/Daytona credits).
 import type { Executor } from './types';
 import { mockExecutor } from './mockExecutor';
+import { realExecutor } from './realExecutor';
 
-export const executor: Executor = mockExecutor;
+export const executor: Executor = process.env.PACER_MOCK === '1' ? mockExecutor : realExecutor;

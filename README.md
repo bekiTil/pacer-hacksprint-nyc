@@ -28,7 +28,7 @@ Two ways to use it: a **web app** (live run timeline and results dashboard) and 
 
 | Sponsor | What it does in Pacer |
 |---|---|
-| **AWS Bedrock** | Every LLM call (Claude Haiku / Sonnet / Opus) plus the cost model. The plugin runs Claude Code with `CLAUDE_CODE_USE_BEDROCK=1`. |
+| **AWS Bedrock** | Every LLM call (Claude Haiku 4.5 / Sonnet 5.5 / Opus 5.5; Haiku 5.5 is blocked on our account) plus the cost model. The plugin runs Claude Code with `CLAUDE_CODE_USE_BEDROCK=1`. |
 | **Daytona** | Isolated sandbox per run. Generated code is tested there, and the result decides whether to upgrade the model. |
 | **Arize AX** | OpenInference traces of the whole loop, LLM-as-judge quality evals, a strategy comparison dashboard, and the data behind the scorecard. |
 
@@ -125,21 +125,21 @@ ARIZE_PROJECT_NAME=pacer
 - [x] `core/types.ts`, stubs for all cross-track functions, `scripts/contract-check.ts` committed (done by Yared, 11:40)
 
 ### Y1. `core/models.ts` (11:35–11:45)
-- [ ] `TIERS: Record<Tier, { modelId: string; inPerMTok: number; outPerMTok: number }>` with Bedrock pricing
+- [x] `TIERS: Record<Tier, { modelId: string; inPerMTok: number; outPerMTok: number }>` with Bedrock pricing
 - [ ] `nextTier(t)`: haiku→sonnet→opus→null
 - [ ] `costUsd(tier, tokensIn, tokensOut)`
 - [ ] `model(tier)` returns the `@ai-sdk/amazon-bedrock` model instance
 - ✅ **Done when:** a one-off script calls all 3 tiers with "say hi" and prints the cost.
 
 ### Y2. `core/sandbox.ts` (11:45–12:10)
-- [ ] `runTests(files, testFiles, testCmd)`: create a Daytona python sandbox, upload all files (starter + generated + tests), run `testCmd`, return `{passed: exitCode===0, output}` (truncated to 2k chars), **always delete the sandbox in `finally`**
+- [x] `runTests(files, testFiles, testCmd)`: create a Daytona python sandbox, upload all files (starter + generated + tests), run `testCmd`, return `{passed: exitCode===0, output}` (truncated to 2k chars), **always delete the sandbox in `finally`**
 - [ ] Timeout ~60s per test run. Install pytest if the image lacks it.
 - [ ] Wrap in `withSpan('sandbox.test', {...})` (temporarily a no-op if Bereket's tracing isn't ready)
 - ✅ **Done when:** a task's reference `solution/` passes and its `files/` starter fails, both via `runTests`.
 
 ### Y3. `core/profiler.ts` + `core/planner.ts` (12:10–12:50)
-- [ ] Profiler: Haiku `generateObject` with a zod schema → `{taskType, difficulty, steps[{name, estTokens}]}`
-- [ ] Planner `planTask(...)`:
+- [x] Profiler: Haiku `generateObject` with a zod schema → `{taskType, difficulty, steps[{name, estTokens}]}`
+- [x] Planner `planTask(...)`:
   - `all-opus` / `all-haiku`: every step on that tier, no escalation
   - `pacer-cold`: plan step → Sonnet. Implement → Haiku if difficulty ≤ 2, Sonnet if 3–4, Opus if 5.
   - `pacer-learned`: for each step, the cheapest tier with scorecard `passRate ≥ 0.8` for that taskType (falls back to cold defaults when fewer than 2 runs)
@@ -148,7 +148,7 @@ ARIZE_PROJECT_NAME=pacer
 - ✅ **Done when:** `planTask` returns a sensible plan for 3 different tasks, printed as a table.
 
 ### Y4. `core/executor.ts` (12:50–1:30)
-- [ ] `executor.run(task, opts)` is an async generator yielding `RunEvent`s:
+- [x] `executor.run(task, opts)` is an async generator yielding `RunEvent`s:
   1. `plan` → yield plan
   2. `plan` step (if present): model writes a short approach note = handoff
   3. `implement`: model gets prompt + starter files + handoff and returns full file contents (structured output `{files: Record<string,string>}`)
@@ -160,17 +160,24 @@ ARIZE_PROJECT_NAME=pacer
 - ✅ **Done when:** `npx tsx scripts/run-one.ts <taskId> pacer-cold` streams events to the console and passes on 2 tasks, one with an escalation. **→ 1:30 SYNC: change `core/executor.ts` to export the real executor and tell Bereket.**
 
 ### Y5. `core/scorecard.ts` (1:30–2:00)
-- [ ] `recordResult` appends to `data/runs.jsonl` and recomputes `data/scorecard.json` (per taskType × tier: runs, passRate, avgCostUsd). Count a tier as "tried" for every tier a run touched: a fail on the lower tier, a pass on the tier where it ended.
+- [x] `recordResult` appends to `data/runs.jsonl` and recomputes `data/scorecard.json` (per taskType × tier: runs, passRate, avgCostUsd). Count a tier as "tried" for every tier a run touched: a fail on the lower tier, a pass on the tier where it ended.
 - [ ] `getScorecard()`
 - ✅ **Done when:** after running 3 bugfix tasks cold, `pacer-learned` picks a different starting tier than cold for bugfix.
 
 ### Y6. `scripts/bench.ts` (2:00–2:30; **final run starts no later than 2:15**)
-- [ ] Runs all tasks × 4 strategies in order: all-haiku, all-opus, pacer-cold (fills the scorecard), pacer-learned
+- [x] Runs all tasks × 4 strategies in order: all-haiku, all-opus, pacer-cold (fills the scorecard), pacer-learned
 - [ ] Concurrency limit 4 (Daytona + Bedrock rate limits), `client: 'bench'`
 - [ ] Writes `data/results.json` (`RunResult[]`) and prints a summary table: strategy → pass rate, total $, avg escalations
 - ✅ **Done when:** results.json exists and Pacer is cheaper than all-opus with a similar pass rate. Commit `data/results.json` so Bereket's chart and judge can use it.
 
 ---
+
+### Engine status (Yared, 12:55)
+- ✅ Real executor is live: `core/executor.ts` now exports `realExecutor`. Set `PACER_MOCK=1` in `.env.local` to use the mock (saves credits while styling the UI).
+- ✅ Verified end to end on Bedrock + Daytona, including haiku → sonnet escalation after failing hidden tests.
+- Engine scripts: `npx tsx scripts/run-one.ts <taskId> [strategy] [budget]`, `npx tsx scripts/plan-one.ts <taskId>`, `npm run bench -- [--tasks a,b] [--strategies ...] [--concurrency 4]`
+- Each real run takes ~10–30s (sandbox create + LLM). The SSE route should keep the connection open (`export const maxDuration = 300`, `runtime = 'nodejs'`).
+- Waiting on: Bereket's 12 tasks in `tasks/`, then the final bench run.
 
 ## 🎨 Bereket: Experience + Observability track
 
