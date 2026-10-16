@@ -1,0 +1,1024 @@
+[
+  {
+    "runId": "00b5fe15-4d2f-43a3-920e-7a39556aacd3",
+    "taskId": "00-example-bugfix",
+    "taskType": "bugfix",
+    "strategy": "all-haiku",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.000901,
+    "totalTokens": 357,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 6056,
+    "files": {
+      "mathutils.py": "def sum_to_n(n):\n    if n <= 0:\n        return 0\n    total = 0\n    for i in range(1, n + 1):\n        total += i\n    return total\n"
+    }
+  },
+  {
+    "runId": "828bdf66-1114-468e-a2f1-d4b1360c20d8",
+    "taskId": "01-boilerplate-stack",
+    "taskType": "boilerplate",
+    "strategy": "all-haiku",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.001334,
+    "totalTokens": 490,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 6660,
+    "files": {
+      "stack.py": "class Stack:\n    def __init__(self):\n        self._items = []\n\n    def push(self, x):\n        self._items.append(x)\n\n    def pop(self):\n        if self.is_empty():\n            raise IndexError(\"pop from empty stack\")\n        return self._items.pop()\n\n    def peek(self):\n        if self.is_empty():\n            raise IndexError(\"peek from empty stack\")\n        return self._items[-1]\n\n    def is_empty(self):\n        return len(self._items) == 0\n\n    def size(self):\n        return len(self._items)\n"
+    }
+  },
+  {
+    "runId": "2ab01850-7b3a-4807-8c3a-69705459edf3",
+    "taskId": "02-boilerplate-eventbus",
+    "taskType": "boilerplate",
+    "strategy": "all-haiku",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.003715,
+    "totalTokens": 1659,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 11603,
+    "files": {
+      "bus.py": "from collections import defaultdict\nfrom events import Event\n\n\nclass EventBus:\n    def __init__(self):\n        self._handlers = defaultdict(list)\n    \n    def subscribe(self, name, handler):\n        \"\"\"Subscribe a handler to an event by name.\"\"\"\n        self._handlers[name].append(handler)\n    \n    def unsubscribe(self, name, handler):\n        \"\"\"Unsubscribe a handler from an event by name.\"\"\"\n        if name in self._handlers:\n            try:\n                self._handlers[name].remove(handler)\n            except ValueError:\n                pass\n    \n    def publish(self, event):\n        \"\"\"Publish an event, calling all subscribed handlers in order.\"\"\"\n        if event.name in self._handlers:\n            for handler in self._handlers[event.name]:\n                handler(event)\n",
+      "events.py": "from dataclasses import dataclass, field\n\n\n@dataclass\nclass Event:\n    name: str\n    payload: dict = field(default_factory=dict)\n"
+    }
+  },
+  {
+    "runId": "790e78d0-6e6f-439c-9e7e-9f2ee5c39b68",
+    "taskId": "03-bugfix-lru",
+    "taskType": "bugfix",
+    "strategy": "all-haiku",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.001785,
+    "totalTokens": 629,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 7074,
+    "files": {
+      "lru.py": "from collections import OrderedDict\n\nclass LRUCache:\n    def __init__(self, capacity):\n        self.capacity = capacity\n        self.store = OrderedDict()\n\n    def get(self, key):\n        if key not in self.store:\n            return None\n        # Move to end to mark as recently used\n        self.store.move_to_end(key)\n        return self.store[key]\n\n    def put(self, key, value):\n        if key in self.store:\n            # Move existing key to end to mark as recently used\n            self.store.move_to_end(key)\n        elif len(self.store) >= self.capacity:\n            # Evict the least recently used (oldest) key\n            self.store.popitem(last=False)\n        self.store[key] = value\n"
+    }
+  },
+  {
+    "runId": "eccac208-2e71-48e8-93e2-efec4e4e41b5",
+    "taskId": "04-bugfix-intervals",
+    "taskType": "bugfix",
+    "strategy": "all-haiku",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.001601,
+    "totalTokens": 637,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 9419,
+    "files": {
+      "intervals.py": "from models import Interval\n\n\ndef merge(intervals):\n    if not intervals:\n        return []\n    \n    # Sort intervals by start time\n    sorted_intervals = sorted(intervals, key=lambda x: x.start)\n    \n    result = [sorted_intervals[0]]\n    for cur in sorted_intervals[1:]:\n        last = result[-1]\n        if cur.start <= last.end:  # Merge if touching or overlapping\n            result[-1] = Interval(last.start, max(last.end, cur.end))\n        else:\n            result.append(cur)\n    return result\n",
+      "models.py": "from dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass Interval:\n    start: int\n    end: int\n"
+    }
+  },
+  {
+    "runId": "16abd1ff-5625-4517-91ac-66d30feb4a55",
+    "taskId": "05-refactor-extract-pricing",
+    "taskType": "refactor",
+    "strategy": "all-haiku",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.001257,
+    "totalTokens": 509,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 6366,
+    "files": {
+      "checkout.py": "from pricing import calculate_total\n\n\ndef checkout(items, coupon=None):\n    return calculate_total(items, coupon=coupon)\n",
+      "pricing.py": "def calculate_total(items, coupon=None):\n    total = 0.0\n    for item in items:\n        total += item[\"price\"] * item[\"qty\"]\n    if coupon:\n        total = total * (1 - coupon / 100)\n    return round(total, 2)\n"
+    }
+  },
+  {
+    "runId": "98047a9d-4514-48d1-a4b7-13ad8524d7d4",
+    "taskId": "06-refactor-handler-registry",
+    "taskType": "refactor",
+    "strategy": "all-haiku",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.00219,
+    "totalTokens": 706,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 21928,
+    "files": {
+      "handlers.py": "from registry import register, dispatch\n\n@register(\"upper\")\ndef _upper(value):\n    return value.upper()\n\n@register(\"double\")\ndef _double(value):\n    return value * 2\n\n@register(\"negate\")\ndef _negate(value):\n    return -value\n\ndef run(name, value):\n    \"\"\"Dispatch command by name, delegating to the registry.\"\"\"\n    try:\n        return dispatch(name, value)\n    except KeyError:\n        raise ValueError(\"unknown command: \" + name)\n",
+      "registry.py": "_registry = {}\n\ndef register(name):\n    \"\"\"Decorator to register a command handler by name.\"\"\"\n    def decorator(func):\n        _registry[name] = func\n        return func\n    return decorator\n\ndef dispatch(name, value):\n    \"\"\"Dispatch a command to its registered handler.\n    \n    Raises KeyError if the command name was never registered.\n    \"\"\"\n    if name not in _registry:\n        raise KeyError(f\"unknown command: {name}\")\n    return _registry[name](value)\n"
+    }
+  },
+  {
+    "runId": "6060f5c2-697d-4e8f-8f06-732ea1ecd497",
+    "taskId": "07-algorithm-two-sum",
+    "taskType": "algorithm",
+    "strategy": "all-haiku",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.001572,
+    "totalTokens": 500,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 7346,
+    "files": {
+      "two_sum.py": "def two_sum(nums, target):\n    \"\"\"\n    Find two distinct indices i and j such that nums[i] + nums[j] == target.\n    \n    Args:\n        nums: List of integers\n        target: Target sum\n        \n    Returns:\n        Tuple (i, j) with i < j where nums[i] + nums[j] == target, or None if no pair exists.\n        \n    Time Complexity: O(n)\n    Space Complexity: O(n)\n    \"\"\"\n    seen = {}\n    \n    for i, num in enumerate(nums):\n        complement = target - num\n        if complement in seen:\n            j = seen[complement]\n            return (j, i)\n        seen[num] = i\n    \n    return None\n"
+    }
+  },
+  {
+    "runId": "6ca3ba10-5891-47d5-b988-9e1f679425cd",
+    "taskId": "08-algorithm-weighted-schedule",
+    "taskType": "algorithm",
+    "strategy": "all-haiku",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.004354,
+    "totalTokens": 1066,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 9141,
+    "files": {
+      "schedule.py": "def max_profit(jobs):\n    \"\"\"\n    Find the maximum profit from a subset of non-overlapping jobs.\n    \n    Args:\n        jobs: List of (start, end, profit) tuples\n        \n    Returns:\n        Maximum profit achievable by selecting non-overlapping jobs\n    \"\"\"\n    if not jobs:\n        return 0\n    \n    # Sort jobs by end time\n    sorted_jobs = sorted(jobs, key=lambda x: x[1])\n    n = len(sorted_jobs)\n    \n    # dp[i] = maximum profit considering jobs 0..i\n    dp = [0] * n\n    dp[0] = sorted_jobs[0][2]  # Profit of first job\n    \n    for i in range(1, n):\n        current_start, current_end, current_profit = sorted_jobs[i]\n        \n        # Option 1: Don't take current job\n        profit_without = dp[i - 1]\n        \n        # Option 2: Take current job\n        # Find the latest job that doesn't overlap with current job\n        # We need the latest job j where sorted_jobs[j][1] <= current_start\n        latest_non_overlap = find_latest_non_overlapping(sorted_jobs, i, current_start)\n        \n        if latest_non_overlap == -1:\n            # No earlier job is compatible\n            profit_with = current_profit\n        else:\n            profit_with = dp[latest_non_overlap] + current_profit\n        \n        dp[i] = max(profit_without, profit_with)\n    \n    return dp[n - 1]\n\n\ndef find_latest_non_overlapping(sorted_jobs, current_index, current_start):\n    \"\"\"\n    Binary search to find the latest job index that ends at or before current_start.\n    \n    Args:\n        sorted_jobs: Jobs sorted by end time\n        current_index: Current job index (not included in search)\n        current_start: Start time of current job\n        \n    Returns:\n        Index of latest non-overlapping job, or -1 if none exists\n    \"\"\"\n    left, right = 0, current_index - 1\n    result = -1\n    \n    while left <= right:\n        mid = (left + right) // 2\n        if sorted_jobs[mid][1] <= current_start:\n            result = mid\n            left = mid + 1\n        else:\n            right = mid - 1\n    \n    return result\n"
+    }
+  },
+  {
+    "runId": "c809f984-2c7e-429c-978b-8adfbb9acf7e",
+    "taskId": "09-tests-shopping-cart",
+    "taskType": "tests",
+    "strategy": "all-haiku",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.005501,
+    "totalTokens": 2273,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 13510,
+    "files": {
+      "shopping_cart.py": "class ShoppingCart:\n    def __init__(self):\n        self._items = {}\n        self._discount = 0.0\n\n    def add(self, name, price, qty=1):\n        if name in self._items:\n            self._items[name] = (price, self._items[name][1] + qty)\n        else:\n            self._items[name] = (price, qty)\n\n    def remove(self, name):\n        self._items.pop(name, None)\n\n    def total(self):\n        subtotal = sum(price * qty for price, qty in self._items.values())\n        return round(subtotal * (1 - self._discount), 2)\n\n    def apply_discount(self, percent):\n        self._discount = percent / 100\n",
+      "test_shopping_cart.py": "from shopping_cart import ShoppingCart\n\n\ndef test_add_items_and_total():\n    cart = ShoppingCart()\n    cart.add(\"apple\", 1.50, 2)\n    cart.add(\"banana\", 0.75, 3)\n    assert cart.total() == 5.25\n\n\ndef test_remove_item():\n    cart = ShoppingCart()\n    cart.add(\"apple\", 1.50, 2)\n    cart.add(\"banana\", 0.75, 3)\n    cart.remove(\"apple\")\n    assert cart.total() == 2.25\n\n\ndef test_apply_percentage_discount():\n    cart = ShoppingCart()\n    cart.add(\"apple\", 10.00, 1)\n    cart.apply_discount(20)\n    assert cart.total() == 8.0\n\n\ndef test_remove_nonexistent_item():\n    cart = ShoppingCart()\n    cart.add(\"apple\", 1.50, 2)\n    cart.remove(\"banana\")\n    assert cart.total() == 3.0\n"
+    }
+  },
+  {
+    "runId": "b756c7a6-49c7-466c-a450-cbc8b3497fca",
+    "taskId": "10-tests-validator",
+    "taskType": "tests",
+    "strategy": "all-haiku",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.003511,
+    "totalTokens": 1079,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 10392,
+    "files": {
+      "rules.py": "def is_email(value):\n    return isinstance(value, str) and \"@\" in value and \".\" in value.split(\"@\")[-1]\n\n\ndef is_adult(value):\n    return isinstance(value, int) and not isinstance(value, bool) and value >= 18\n\n\ndef is_valid_username(value):\n    return isinstance(value, str) and len(value) >= 3\n",
+      "validator.py": "from rules import is_email, is_adult, is_valid_username\n\n\ndef validate(form):\n    errors = []\n    if not is_email(form.get(\"email\")):\n        errors.append(\"invalid email\")\n    if not is_adult(form.get(\"age\")):\n        errors.append(\"must be 18 or older\")\n    if not is_valid_username(form.get(\"username\")):\n        errors.append(\"username too short\")\n    return errors\n",
+      "test_validator.py": "from validator import validate\n\n\ndef test_valid_form():\n    \"\"\"Test that a fully valid form returns no errors.\"\"\"\n    form = {\n        \"email\": \"user@example.com\",\n        \"age\": 25,\n        \"username\": \"john_doe\"\n    }\n    assert validate(form) == []\n\n\ndef test_missing_email():\n    \"\"\"Test that a missing email returns an error.\"\"\"\n    form = {\n        \"email\": None,\n        \"age\": 25,\n        \"username\": \"john_doe\"\n    }\n    assert \"invalid email\" in validate(form)\n\n\ndef test_empty_email():\n    \"\"\"Test that an empty email returns an error.\"\"\"\n    form = {\n        \"email\": \"\",\n        \"age\": 25,\n        \"username\": \"john_doe\"\n    }\n    assert \"invalid email\" in validate(form)\n\n\ndef test_email_without_at_symbol():\n    \"\"\"Test that an email without @ symbol returns an error.\"\"\"\n    form = {\n        \"email\": \"userexample.com\",\n        \"age\": 25,\n        \"username\": \"john_doe\"\n    }\n    assert \"invalid email\" in validate(form)\n\n\ndef test_age_below_18():\n    \"\"\"Test that an age below 18 returns an error.\"\"\"\n    form = {\n        \"email\": \"user@example.com\",\n        \"age\": 17,\n        \"username\": \"john_doe\"\n    }\n    assert \"must be 18 or older\" in validate(form)\n\n\ndef test_non_integer_age():\n    \"\"\"Test that a non-integer age returns an error.\"\"\"\n    form = {\n        \"email\": \"user@example.com\",\n        \"age\": \"25\",\n        \"username\": \"john_doe\"\n    }\n    assert \"must be 18 or older\" in validate(form)\n\n\ndef test_username_shorter_than_3_characters():\n    \"\"\"Test that a username shorter than 3 characters returns an error.\"\"\"\n    form = {\n        \"email\": \"user@example.com\",\n        \"age\": 25,\n        \"username\": \"ab\"\n    }\n    assert \"username too short\" in validate(form)\n"
+    }
+  },
+  {
+    "runId": "67c12061-03a9-475d-930b-bbd1839ef62f",
+    "taskId": "11-docs-geometry",
+    "taskType": "docs",
+    "strategy": "all-haiku",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.001588,
+    "totalTokens": 524,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 6717,
+    "files": {
+      "geometry.py": "import math\n\n\ndef area_circle(radius):\n    \"\"\"\n    Calculate the area of a circle.\n    \n    Parameters:\n        radius: The radius of the circle.\n    \n    Returns:\n        The area of the circle.\n    \"\"\"\n    return math.pi * radius * radius\n\n\ndef area_rectangle(width, height):\n    \"\"\"\n    Calculate the area of a rectangle.\n    \n    Parameters:\n        width: The width of the rectangle.\n        height: The height of the rectangle.\n    \n    Returns:\n        The area of the rectangle.\n    \"\"\"\n    return width * height\n\n\ndef area_triangle(base, height):\n    \"\"\"\n    Calculate the area of a triangle.\n    \n    Parameters:\n        base: The base of the triangle.\n        height: The height of the triangle.\n    \n    Returns:\n        The area of the triangle.\n    \"\"\"\n    return 0.5 * base * height\n"
+    }
+  },
+  {
+    "runId": "e856a7bb-22c5-4a69-abc9-221e2e9a1aee",
+    "taskId": "12-docs-api-reference",
+    "taskType": "docs",
+    "strategy": "all-haiku",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.002404,
+    "totalTokens": 748,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 9381,
+    "files": {
+      "api.py": "\"\"\"Post management API for creating, summarizing, and tagging blog posts.\"\"\"\n\n\ndef _slugify(text):\n    return text.strip().lower().replace(\" \", \"-\")\n\n\ndef create_post(title, body):\n    \"\"\"Create a new blog post with a slug generated from the title.\n\n    Args:\n        title: The title of the post.\n        body: The body content of the post.\n\n    Returns:\n        A dictionary containing the post slug, title, and body.\n    \"\"\"\n    return {\"slug\": _slugify(title), \"title\": title, \"body\": body}\n\n\ndef summarize(body, limit=100):\n    \"\"\"Truncate body text to a maximum length with an ellipsis indicator.\n\n    Args:\n        body: The text to summarize.\n        limit: Maximum number of characters (default: 100).\n\n    Returns:\n        The body text if within limit, otherwise truncated text ending with \"…\".\n    \"\"\"\n    return body if len(body) <= limit else body[: limit - 1] + \"…\"\n\n\ndef tag_post(post, tags):\n    \"\"\"Add sorted unique tags to a post.\n\n    Args:\n        post: A post dictionary to tag.\n        tags: An iterable of tag strings to add to the post.\n\n    Returns:\n        A new post dictionary with tags added as a sorted list.\n    \"\"\"\n    post = dict(post)\n    post[\"tags\"] = sorted(set(tags))\n    return post\n"
+    }
+  },
+  {
+    "runId": "40fb4cc4-6c94-4137-96e0-74c6f5daaaf7",
+    "taskId": "00-example-bugfix",
+    "taskType": "bugfix",
+    "strategy": "all-opus",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.006416,
+    "totalTokens": 540,
+    "escalations": 0,
+    "finalTier": "opus",
+    "tiersTried": [
+      "opus"
+    ],
+    "durationMs": 10194,
+    "files": {
+      "mathutils.py": "def sum_to_n(n):\n    \"\"\"Return 1 + 2 + ... + n, or 0 when n <= 0.\"\"\"\n    total = 0\n    for i in range(1, n + 1):\n        total += i\n    return total\n"
+    }
+  },
+  {
+    "runId": "44a06a04-ae85-44f2-a709-0e43f6632f30",
+    "taskId": "01-boilerplate-stack",
+    "taskType": "boilerplate",
+    "strategy": "all-opus",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.009312,
+    "totalTokens": 760,
+    "escalations": 0,
+    "finalTier": "opus",
+    "tiersTried": [
+      "opus"
+    ],
+    "durationMs": 10279,
+    "files": {
+      "stack.py": "class Stack:\n    \"\"\"A simple LIFO stack backed by a Python list.\"\"\"\n\n    def __init__(self):\n        self._items = []\n\n    def push(self, x):\n        \"\"\"Push x onto the top of the stack.\"\"\"\n        self._items.append(x)\n\n    def pop(self):\n        \"\"\"Remove and return the top item. Raises IndexError if the stack is empty.\"\"\"\n        if not self._items:\n            raise IndexError(\"pop from empty stack\")\n        return self._items.pop()\n\n    def peek(self):\n        \"\"\"Return the top item without removing it. Raises IndexError if the stack is empty.\"\"\"\n        if not self._items:\n            raise IndexError(\"peek from empty stack\")\n        return self._items[-1]\n\n    def is_empty(self):\n        \"\"\"Return True if the stack has no items.\"\"\"\n        return not self._items\n\n    def size(self):\n        \"\"\"Return the number of items in the stack.\"\"\"\n        return len(self._items)\n"
+    }
+  },
+  {
+    "runId": "28ffdf48-8fd4-41c3-9dc9-6660886d956f",
+    "taskId": "02-boilerplate-eventbus",
+    "taskType": "boilerplate",
+    "strategy": "all-opus",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.019132,
+    "totalTokens": 1271,
+    "escalations": 0,
+    "finalTier": "opus",
+    "tiersTried": [
+      "opus"
+    ],
+    "durationMs": 24773,
+    "files": {
+      "bus.py": "from typing import Callable, Dict, List\n\nfrom events import Event\n\nHandler = Callable[[Event], None]\n\n\nclass EventBus:\n    \"\"\"In-memory publish/subscribe event bus.\"\"\"\n\n    def __init__(self) -> None:\n        self._handlers: Dict[str, List[Handler]] = {}\n\n    def subscribe(self, name: str, handler: Handler) -> None:\n        \"\"\"Register handler for events named `name`. Handlers run in subscription order.\"\"\"\n        self._handlers.setdefault(name, []).append(handler)\n\n    def unsubscribe(self, name: str, handler: Handler) -> None:\n        \"\"\"Remove the earliest subscription of handler for `name`.\n\n        If the handler is not subscribed, this does nothing.\n        \"\"\"\n        handlers = self._handlers.get(name)\n        if not handlers:\n            return\n        try:\n            handlers.remove(handler)\n        except ValueError:\n            return\n        if not handlers:\n            del self._handlers[name]\n\n    def publish(self, event: Event) -> None:\n        \"\"\"Call every handler subscribed to event.name with the event, in order.\n\n        Publishing an event with no subscribers does nothing.\n        \"\"\"\n        # Copy the list so handlers may subscribe/unsubscribe during dispatch.\n        for handler in list(self._handlers.get(event.name, ())):\n            handler(event)\n",
+      "events.py": "from dataclasses import dataclass, field\nfrom typing import Any, Dict\n\n\n@dataclass\nclass Event:\n    \"\"\"A named event carrying an arbitrary payload.\"\"\"\n\n    name: str\n    payload: Dict[str, Any] = field(default_factory=dict)\n"
+    }
+  },
+  {
+    "runId": "bf5215db-3e13-4728-982a-50fee123a193",
+    "taskId": "03-bugfix-lru",
+    "taskType": "bugfix",
+    "strategy": "all-opus",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.012876,
+    "totalTokens": 979,
+    "escalations": 0,
+    "finalTier": "opus",
+    "tiersTried": [
+      "opus"
+    ],
+    "durationMs": 17107,
+    "files": {
+      "lru.py": "from collections import OrderedDict\n\n\nclass LRUCache:\n    def __init__(self, capacity):\n        self.capacity = capacity\n        self.store = OrderedDict()\n\n    def get(self, key):\n        if key not in self.store:\n            return None\n        # Reading counts as a use: mark as most recently used.\n        self.store.move_to_end(key)\n        return self.store[key]\n\n    def put(self, key, value):\n        if self.capacity <= 0:\n            return\n        if key in self.store:\n            # Updating counts as a use: mark as most recently used.\n            self.store.move_to_end(key)\n        elif len(self.store) >= self.capacity:\n            # Evict the least recently used key (front of the order).\n            self.store.popitem(last=False)\n        self.store[key] = value\n"
+    }
+  },
+  {
+    "runId": "da187d85-d747-46a7-89d3-97c6cd21d9b6",
+    "taskId": "04-bugfix-intervals",
+    "taskType": "bugfix",
+    "strategy": "all-opus",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.007688,
+    "totalTokens": 786,
+    "escalations": 0,
+    "finalTier": "opus",
+    "tiersTried": [
+      "opus"
+    ],
+    "durationMs": 8815,
+    "files": {
+      "intervals.py": "from models import Interval\n\n\ndef merge(intervals):\n    if not intervals:\n        return []\n    ordered = sorted(intervals, key=lambda iv: (iv.start, iv.end))\n    result = [ordered[0]]\n    for cur in ordered[1:]:\n        last = result[-1]\n        if cur.start <= last.end:\n            result[-1] = Interval(last.start, max(last.end, cur.end))\n        else:\n            result.append(cur)\n    return result\n",
+      "models.py": "from dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass Interval:\n    start: int\n    end: int\n"
+    }
+  },
+  {
+    "runId": "a5726624-1273-4f33-a7f9-e93da289bebe",
+    "taskId": "05-refactor-extract-pricing",
+    "taskType": "refactor",
+    "strategy": "all-opus",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.012904,
+    "totalTokens": 970,
+    "escalations": 0,
+    "finalTier": "opus",
+    "tiersTried": [
+      "opus"
+    ],
+    "durationMs": 14546,
+    "files": {
+      "checkout.py": "from pricing import calculate_total\n\n\ndef checkout(items, coupon=None):\n    return calculate_total(items, coupon)\n",
+      "pricing.py": "def calculate_total(items, coupon=None):\n    \"\"\"Return the order total rounded to cents.\n\n    items: list of dicts with 'price' and 'qty'.\n    coupon: optional percent off (e.g. 10 means 10%). A falsy coupon\n    (None or 0) applies no discount.\n    \"\"\"\n    total = 0.0\n    for item in items:\n        total += item[\"price\"] * item[\"qty\"]\n    if coupon:\n        total = total * (1 - coupon / 100)\n    return round(total, 2)\n"
+    }
+  },
+  {
+    "runId": "ab2af406-9f8a-4b40-b696-b8aa9484fa9e",
+    "taskId": "06-refactor-handler-registry",
+    "taskType": "refactor",
+    "strategy": "all-opus",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.025288,
+    "totalTokens": 1610,
+    "escalations": 0,
+    "finalTier": "opus",
+    "tiersTried": [
+      "opus"
+    ],
+    "durationMs": 15425,
+    "files": {
+      "handlers.py": "from registry import dispatch, register\n\n\n@register(\"upper\")\ndef upper(value):\n    return value.upper()\n\n\n@register(\"double\")\ndef double(value):\n    return value * 2\n\n\n@register(\"negate\")\ndef negate(value):\n    return -value\n\n\ndef run(name, value):\n    return dispatch(name, value)\n",
+      "registry.py": "\"\"\"Command registry: register handlers by name and dispatch to them.\"\"\"\n\n_REGISTRY = {}\n\n\nclass UnknownCommandError(KeyError, ValueError):\n    \"\"\"Raised for unregistered commands.\n\n    Subclasses KeyError (the registry contract) and ValueError (what\n    handlers.run() raised before the refactor), so existing callers that\n    catch ValueError keep working.\n    \"\"\"\n\n\ndef register(name):\n    \"\"\"Decorator that registers ``func`` as the handler for command ``name``.\"\"\"\n    if not isinstance(name, str):\n        raise TypeError(\"command name must be a str, got %r\" % (name,))\n\n    def decorator(func):\n        existing = _REGISTRY.get(name)\n        if existing is not None and existing is not func:\n            raise ValueError(\"command already registered: \" + name)\n        _REGISTRY[name] = func\n        return func\n\n    return decorator\n\n\ndef dispatch(name, value):\n    \"\"\"Call the handler registered for ``name`` with ``value``.\"\"\"\n    try:\n        handler = _REGISTRY[name]\n    except (KeyError, TypeError):\n        raise UnknownCommandError(\"unknown command: \" + str(name)) from None\n    return handler(value)\n"
+    }
+  },
+  {
+    "runId": "8e3b2b02-27e7-427a-a2fe-c99af164bc83",
+    "taskId": "07-algorithm-two-sum",
+    "taskType": "algorithm",
+    "strategy": "all-opus",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.008556,
+    "totalTokens": 663,
+    "escalations": 0,
+    "finalTier": "opus",
+    "tiersTried": [
+      "opus"
+    ],
+    "durationMs": 11752,
+    "files": {
+      "two_sum.py": "def two_sum(nums, target):\n    \"\"\"Return (i, j) with i < j such that nums[i] + nums[j] == target, or None.\n\n    Uses a single pass with a hash map of value -> index, giving O(n) time\n    and O(n) extra space. An element is never paired with itself because\n    each value's complement is looked up before that value is recorded.\n    \"\"\"\n    seen = {}\n    for j, value in enumerate(nums):\n        complement = target - value\n        if complement in seen:\n            return (seen[complement], j)\n        if value not in seen:\n            seen[value] = j\n    return None\n"
+    }
+  },
+  {
+    "runId": "1e9c4cf2-ec54-4c64-a744-fcbba6404c3c",
+    "taskId": "08-algorithm-weighted-schedule",
+    "taskType": "algorithm",
+    "strategy": "all-opus",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.018004,
+    "totalTokens": 1165,
+    "escalations": 0,
+    "finalTier": "opus",
+    "tiersTried": [
+      "opus"
+    ],
+    "durationMs": 13134,
+    "files": {
+      "schedule.py": "from bisect import bisect_right\n\n\ndef max_profit(jobs):\n    \"\"\"Return the maximum total profit from a set of mutually non-overlapping jobs.\n\n    jobs: iterable of (start, end, profit) tuples. A job ending at time t does\n    not overlap a job starting at time t.\n\n    Runs in O(n log n): sort by end time, then DP with binary search.\n    \"\"\"\n    sorted_jobs = sorted(jobs, key=lambda j: j[1])\n    n = len(sorted_jobs)\n    if n == 0:\n        return 0\n\n    ends = [job[1] for job in sorted_jobs]\n    # dp[i] = best profit using only the first i jobs (in end-time order)\n    dp = [0] * (n + 1)\n    for i in range(1, n + 1):\n        start, _end, profit = sorted_jobs[i - 1]\n        # Count of earlier jobs (indices < i-1) whose end <= start.\n        k = bisect_right(ends, start, 0, i - 1)\n        take = profit + dp[k]\n        skip = dp[i - 1]\n        dp[i] = take if take > skip else skip\n    return dp[n]\n"
+    }
+  },
+  {
+    "runId": "6d1a8b9d-1acf-4ec4-9add-40d19a5efbb4",
+    "taskId": "09-tests-shopping-cart",
+    "taskType": "tests",
+    "strategy": "all-opus",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.024768,
+    "totalTokens": 1664,
+    "escalations": 0,
+    "finalTier": "opus",
+    "tiersTried": [
+      "opus"
+    ],
+    "durationMs": 15087,
+    "files": {
+      "shopping_cart.py": "class ShoppingCart:\n    def __init__(self):\n        self._items = {}\n        self._discount = 0.0\n\n    def add(self, name, price, qty=1):\n        if name in self._items:\n            self._items[name] = (price, self._items[name][1] + qty)\n        else:\n            self._items[name] = (price, qty)\n\n    def remove(self, name):\n        self._items.pop(name, None)\n\n    def total(self):\n        subtotal = sum(price * qty for price, qty in self._items.values())\n        return round(subtotal * (1 - self._discount), 2)\n\n    def apply_discount(self, percent):\n        self._discount = percent / 100\n",
+      "test_shopping_cart.py": "import pytest\n\nfrom shopping_cart import ShoppingCart\n\n\ndef test_add_items_and_total():\n    cart = ShoppingCart()\n    cart.add(\"apple\", 1.50, 2)\n    cart.add(\"banana\", 0.25, 3)\n    assert cart.total() == pytest.approx(3.75)\n\n\ndef test_add_same_item_accumulates_quantity():\n    cart = ShoppingCart()\n    cart.add(\"apple\", 2.00)\n    cart.add(\"apple\", 2.00, 2)\n    assert cart.total() == pytest.approx(6.00)\n\n\ndef test_empty_cart_total_is_zero():\n    cart = ShoppingCart()\n    assert cart.total() == pytest.approx(0.0)\n\n\ndef test_remove_item():\n    cart = ShoppingCart()\n    cart.add(\"apple\", 1.50, 2)\n    cart.add(\"banana\", 0.25, 4)\n    cart.remove(\"apple\")\n    assert cart.total() == pytest.approx(1.00)\n\n\ndef test_apply_percentage_discount():\n    cart = ShoppingCart()\n    cart.add(\"book\", 10.00, 2)\n    cart.apply_discount(10)\n    assert cart.total() == pytest.approx(18.00)\n\n\ndef test_remove_missing_item_is_noop():\n    cart = ShoppingCart()\n    cart.add(\"apple\", 1.50, 2)\n    cart.remove(\"not-in-cart\")\n    assert cart.total() == pytest.approx(3.00)\n\n\ndef test_remove_from_empty_cart_is_noop():\n    cart = ShoppingCart()\n    cart.remove(\"anything\")\n    assert cart.total() == pytest.approx(0.0)\n"
+    }
+  },
+  {
+    "runId": "5a0470dc-7f2f-4236-a546-5550f153fef7",
+    "taskId": "10-tests-validator",
+    "taskType": "tests",
+    "strategy": "all-opus",
+    "client": "bench",
+    "passed": false,
+    "totalCostUsd": 0.033448,
+    "totalTokens": 3310,
+    "escalations": 0,
+    "finalTier": "opus",
+    "tiersTried": [
+      "opus"
+    ],
+    "durationMs": 25391,
+    "files": {
+      "rules.py": "def is_email(value):\n    return isinstance(value, str) and \"@\" in value and \".\" in value.split(\"@\")[-1]\n\n\ndef is_adult(value):\n    return isinstance(value, int) and not isinstance(value, bool) and value >= 18\n\n\ndef is_valid_username(value):\n    return isinstance(value, str) and len(value) >= 3\n",
+      "validator.py": "from rules import is_email, is_adult, is_valid_username\n\n\ndef validate(form):\n    errors = []\n    if not is_email(form.get(\"email\")):\n        errors.append(\"invalid email\")\n    if not is_adult(form.get(\"age\")):\n        errors.append(\"must be 18 or older\")\n    if not is_valid_username(form.get(\"username\")):\n        errors.append(\"username too short\")\n    return errors\n"
+    }
+  },
+  {
+    "runId": "a1cdb216-b7c1-47c1-8e1b-df17355361bb",
+    "taskId": "11-docs-geometry",
+    "taskType": "docs",
+    "strategy": "all-opus",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.009804,
+    "totalTokens": 759,
+    "escalations": 0,
+    "finalTier": "opus",
+    "tiersTried": [
+      "opus"
+    ],
+    "durationMs": 11790,
+    "files": {
+      "geometry.py": "import math\n\n\ndef area_circle(radius):\n    \"\"\"Compute the area of a circle.\n\n    Parameters:\n        radius: The radius of the circle (a non-negative number).\n\n    Returns:\n        The area of the circle, calculated as pi * radius * radius.\n    \"\"\"\n    return math.pi * radius * radius\n\n\ndef area_rectangle(width, height):\n    \"\"\"Compute the area of a rectangle.\n\n    Parameters:\n        width: The width of the rectangle.\n        height: The height of the rectangle.\n\n    Returns:\n        The area of the rectangle, calculated as width * height.\n    \"\"\"\n    return width * height\n\n\ndef area_triangle(base, height):\n    \"\"\"Compute the area of a triangle.\n\n    Parameters:\n        base: The length of the triangle's base.\n        height: The perpendicular height of the triangle, measured from the base.\n\n    Returns:\n        The area of the triangle, calculated as 0.5 * base * height.\n    \"\"\"\n    return 0.5 * base * height\n"
+    }
+  },
+  {
+    "runId": "e892d998-4f66-4494-b068-ab10d8fb603a",
+    "taskId": "12-docs-api-reference",
+    "taskType": "docs",
+    "strategy": "all-opus",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.01732,
+    "totalTokens": 1198,
+    "escalations": 0,
+    "finalTier": "opus",
+    "tiersTried": [
+      "opus"
+    ],
+    "durationMs": 29014,
+    "files": {
+      "api.py": "\"\"\"Simple helpers for creating, summarizing, and tagging blog posts.\n\nPosts are represented as plain dictionaries with ``slug``, ``title``, and\n``body`` keys, and optionally a ``tags`` key.\n\"\"\"\n\n\ndef _slugify(text):\n    return text.strip().lower().replace(\" \", \"-\")\n\n\ndef create_post(title, body):\n    \"\"\"Create a new post dictionary from a title and body.\n\n    Args:\n        title: The post title. It is also used to derive the slug, which is\n            the title with surrounding whitespace stripped, lowercased, and\n            spaces replaced by hyphens.\n        body: The post body text.\n\n    Returns:\n        A dict with ``slug``, ``title``, and ``body`` keys.\n    \"\"\"\n    return {\"slug\": _slugify(title), \"title\": title, \"body\": body}\n\n\ndef summarize(body, limit=100):\n    \"\"\"Shorten a body of text to at most ``limit`` characters.\n\n    Args:\n        body: The text to summarize.\n        limit: The maximum length of the result, in characters. Defaults\n            to 100.\n\n    Returns:\n        ``body`` unchanged if its length is at most ``limit``. Otherwise, the\n        first ``limit - 1`` characters of ``body`` followed by an ellipsis\n        character (\"…\"), giving a result exactly ``limit`` characters long.\n    \"\"\"\n    return body if len(body) <= limit else body[: limit - 1] + \"…\"\n\n\ndef tag_post(post, tags):\n    \"\"\"Return a copy of a post with the given tags attached.\n\n    The original post is not modified. Any existing ``tags`` key in the\n    copy is replaced.\n\n    Args:\n        post: The post dictionary to tag.\n        tags: An iterable of tags. Duplicates are removed.\n\n    Returns:\n        A shallow copy of ``post`` with a ``tags`` key holding a sorted\n        list of the unique tags.\n    \"\"\"\n    post = dict(post)\n    post[\"tags\"] = sorted(set(tags))\n    return post\n"
+    }
+  },
+  {
+    "runId": "976eb3fe-2a87-4e39-a027-1aea5412307c",
+    "taskId": "00-example-bugfix",
+    "taskType": "bugfix",
+    "strategy": "pacer-cold",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.001607,
+    "totalTokens": 711,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 6868,
+    "files": {
+      "mathutils.py": "def sum_to_n(n):\n    if n <= 0:\n        return 0\n    total = 0\n    for i in range(1, n + 1):\n        total += i\n    return total\n"
+    }
+  },
+  {
+    "runId": "8e05f0fc-b41a-4e34-8f5c-13e886c772a7",
+    "taskId": "01-boilerplate-stack",
+    "taskType": "boilerplate",
+    "strategy": "pacer-cold",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.002003,
+    "totalTokens": 883,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 9344,
+    "files": {
+      "stack.py": "class Stack:\n    def __init__(self):\n        self._items = []\n\n    def push(self, x):\n        self._items.append(x)\n\n    def pop(self):\n        if self.is_empty():\n            raise IndexError(\"pop from empty stack\")\n        return self._items.pop()\n\n    def peek(self):\n        if self.is_empty():\n            raise IndexError(\"peek from empty stack\")\n        return self._items[-1]\n\n    def is_empty(self):\n        return len(self._items) == 0\n\n    def size(self):\n        return len(self._items)\n"
+    }
+  },
+  {
+    "runId": "88a00f69-fadc-488e-8f05-1343c7fc17cc",
+    "taskId": "02-boilerplate-eventbus",
+    "taskType": "boilerplate",
+    "strategy": "pacer-cold",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.010473,
+    "totalTokens": 2731,
+    "escalations": 1,
+    "finalTier": "sonnet",
+    "tiersTried": [
+      "haiku",
+      "sonnet"
+    ],
+    "durationMs": 13325,
+    "files": {
+      "bus.py": "from events import Event\n\n\nclass EventBus:\n    def __init__(self):\n        self._subscribers = {}\n\n    def subscribe(self, name, handler):\n        \"\"\"Subscribe a handler to an event by name.\"\"\"\n        self._subscribers.setdefault(name, []).append(handler)\n\n    def unsubscribe(self, name, handler):\n        \"\"\"Unsubscribe a handler from an event by name (no-op if not subscribed).\"\"\"\n        handlers = self._subscribers.get(name)\n        if not handlers:\n            return\n        try:\n            handlers.remove(handler)\n        except ValueError:\n            return\n        if not handlers:\n            del self._subscribers[name]\n\n    def publish(self, event):\n        \"\"\"Publish an event to all subscribed handlers, in subscription order.\"\"\"\n        for handler in list(self._subscribers.get(event.name, ())):\n            handler(event)\n",
+      "events.py": "from dataclasses import dataclass, field\n\n\n@dataclass\nclass Event:\n    name: str\n    payload: dict = field(default_factory=dict)\n"
+    }
+  },
+  {
+    "runId": "05192b45-f651-4b12-8e70-991d0ec9b473",
+    "taskId": "03-bugfix-lru",
+    "taskType": "bugfix",
+    "strategy": "pacer-cold",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.0026449999999999998,
+    "totalTokens": 1109,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 8246,
+    "files": {
+      "lru.py": "from collections import OrderedDict\n\nclass LRUCache:\n    def __init__(self, capacity):\n        self.capacity = capacity\n        self.store = OrderedDict()\n\n    def get(self, key):\n        if key not in self.store:\n            return None\n        # Move to end to mark as recently used\n        self.store.move_to_end(key)\n        return self.store[key]\n\n    def put(self, key, value):\n        if key in self.store:\n            # Move to end to mark as recently used\n            self.store.move_to_end(key)\n        elif len(self.store) >= self.capacity:\n            # Evict least recently used (oldest) key\n            self.store.popitem(last=False)\n        self.store[key] = value\n"
+    }
+  },
+  {
+    "runId": "089fd694-27ff-4f04-b751-14a3939b37d6",
+    "taskId": "04-bugfix-intervals",
+    "taskType": "bugfix",
+    "strategy": "pacer-cold",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.0027040000000000002,
+    "totalTokens": 1208,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 9598,
+    "files": {
+      "intervals.py": "from models import Interval\n\n\ndef merge(intervals):\n    if not intervals:\n        return []\n    sorted_intervals = sorted(intervals, key=lambda x: x.start)\n    result = [sorted_intervals[0]]\n    for cur in sorted_intervals[1:]:\n        last = result[-1]\n        if cur.start <= last.end:  # Changed from < to <= to merge touching intervals\n            result[-1] = Interval(last.start, max(last.end, cur.end))\n        else:\n            result.append(cur)\n    return result\n",
+      "models.py": "from dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass Interval:\n    start: int\n    end: int\n"
+    }
+  },
+  {
+    "runId": "31a29c95-0c48-4d0d-863d-242da4146f84",
+    "taskId": "05-refactor-extract-pricing",
+    "taskType": "refactor",
+    "strategy": "pacer-cold",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.002014,
+    "totalTokens": 954,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 8874,
+    "files": {
+      "checkout.py": "from pricing import calculate_total\n\n\ndef checkout(items, coupon=None):\n    return calculate_total(items, coupon)\n",
+      "pricing.py": "def calculate_total(items, coupon=None):\n    total = 0.0\n    for item in items:\n        total += item[\"price\"] * item[\"qty\"]\n    if coupon:\n        total = total * (1 - coupon / 100)\n    return round(total, 2)\n"
+    }
+  },
+  {
+    "runId": "05e24e9f-f4fd-4dcf-a943-bfdd3a4accf0",
+    "taskId": "06-refactor-handler-registry",
+    "taskType": "refactor",
+    "strategy": "pacer-cold",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.01612,
+    "totalTokens": 3513,
+    "escalations": 1,
+    "finalTier": "sonnet",
+    "tiersTried": [
+      "haiku",
+      "sonnet"
+    ],
+    "durationMs": 23100,
+    "files": {
+      "handlers.py": "from registry import register, dispatch\n\n\n@register(\"upper\")\ndef _handle_upper(value):\n    return value.upper()\n\n\n@register(\"double\")\ndef _handle_double(value):\n    return value * 2\n\n\n@register(\"negate\")\ndef _handle_negate(value):\n    return -value\n\n\ndef run(name, value):\n    \"\"\"Dispatch a command by delegating to the registry.\"\"\"\n    return dispatch(name, value)\n",
+      "relative/registry.py": "_registry = {}\n\n\ndef register(name):\n    \"\"\"Decorator to register a command handler by name.\"\"\"\n    def decorator(func):\n        _registry[name] = func\n        return func\n    return decorator\n\n\ndef dispatch(name, value):\n    \"\"\"Dispatch a command by name with the given value.\n    \n    Raises KeyError if the command name was never registered.\n    \"\"\"\n    if name not in _registry:\n        raise KeyError(\"unknown command: \" + name)\n    return _registry[name](value)\n",
+      "relative/handlers.py": "from registry import register, dispatch\n\n\n@register(\"upper\")\ndef _handle_upper(value):\n    return value.upper()\n\n\n@register(\"double\")\ndef _handle_double(value):\n    return value * 2\n\n\n@register(\"negate\")\ndef _handle_negate(value):\n    return -value\n\n\ndef run(name, value):\n    \"\"\"Dispatch a command by delegating to the registry.\"\"\"\n    return dispatch(name, value)\n",
+      "registry.py": "_registry = {}\n\n\ndef register(name):\n    \"\"\"Decorator to register a command handler by name.\"\"\"\n    def decorator(func):\n        _registry[name] = func\n        return func\n    return decorator\n\n\ndef dispatch(name, value):\n    \"\"\"Dispatch a command by name with the given value.\n\n    Raises KeyError if the command name was never registered.\n    \"\"\"\n    if name not in _registry:\n        # Built-in commands live in handlers.py; make sure they are loaded\n        # even if the caller only imported this module.\n        try:\n            import handlers  # noqa: F401\n        except ImportError:\n            pass\n    if name not in _registry:\n        raise KeyError(\"unknown command: \" + str(name))\n    return _registry[name](value)\n"
+    }
+  },
+  {
+    "runId": "ac1805d8-e33d-4004-9304-c53a931e8524",
+    "taskId": "07-algorithm-two-sum",
+    "taskType": "algorithm",
+    "strategy": "pacer-cold",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.0025640000000000003,
+    "totalTokens": 920,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 7392,
+    "files": {
+      "two_sum.py": "def two_sum(nums, target):\n    \"\"\"\n    Find two distinct indices i and j where nums[i] + nums[j] == target.\n    \n    Args:\n        nums: List of integers\n        target: Target sum\n        \n    Returns:\n        Tuple (i, j) with i < j such that nums[i] + nums[j] == target,\n        or None if no such pair exists.\n        \n    Time Complexity: O(n)\n    Space Complexity: O(n)\n    \"\"\"\n    # Dictionary to store value -> index mapping\n    seen = {}\n    \n    for i, num in enumerate(nums):\n        complement = target - num\n        \n        # Check if complement was already seen\n        if complement in seen:\n            j = seen[complement]\n            # Return with i < j (since j was seen before i, we need to order them)\n            return (j, i)\n        \n        # Store current number and its index\n        seen[num] = i\n    \n    # No valid pair found\n    return None\n"
+    }
+  },
+  {
+    "runId": "661754b9-1f39-4603-a55e-1c27c4bc4643",
+    "taskId": "08-algorithm-weighted-schedule",
+    "taskType": "algorithm",
+    "strategy": "pacer-cold",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.023892,
+    "totalTokens": 3822,
+    "escalations": 0,
+    "finalTier": "sonnet",
+    "tiersTried": [
+      "sonnet"
+    ],
+    "durationMs": 20317,
+    "files": {
+      "schedule.py": "from bisect import bisect_right\n\n\ndef max_profit(jobs):\n    \"\"\"Return the maximum total profit of mutually non-overlapping jobs.\n\n    jobs: list of (start, end, profit) tuples. A job ending at time t does\n    not overlap a job starting at t.\n    \"\"\"\n    if not jobs:\n        return 0\n\n    # Sort by (end, start) on a copy so the caller's list is untouched.\n    # Including start in the key puts a zero-length job (t, t) after any\n    # job ending at t that started earlier, so the two can be combined.\n    sorted_jobs = sorted(jobs, key=lambda j: (j[1], j[0]))\n    n = len(sorted_jobs)\n    ends = [j[1] for j in sorted_jobs]\n\n    # dp[k] = best profit using only the first k sorted jobs.\n    dp = [0] * (n + 1)\n    for i, (start, _end, profit) in enumerate(sorted_jobs):\n        # bisect_right counts earlier jobs with end <= start, so a job ending\n        # at t is compatible with one starting at t. hi=i stops a job from\n        # matching itself (zero-length jobs where start == end).\n        p = bisect_right(ends, start, 0, i)\n        dp[i + 1] = max(dp[i], profit + dp[p])\n\n    return dp[n]\n"
+    }
+  },
+  {
+    "runId": "c536e9ff-ce21-4243-b9ac-b64cecf83c21",
+    "taskId": "09-tests-shopping-cart",
+    "taskType": "tests",
+    "strategy": "pacer-cold",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.013666000000000001,
+    "totalTokens": 3572,
+    "escalations": 1,
+    "finalTier": "sonnet",
+    "tiersTried": [
+      "haiku",
+      "sonnet"
+    ],
+    "durationMs": 13731,
+    "files": {
+      "shopping_cart.py": "class ShoppingCart:\n    def __init__(self):\n        self._items = {}\n        self._discount = 0.0\n\n    def add(self, name, price, qty=1):\n        if name in self._items:\n            self._items[name] = (price, self._items[name][1] + qty)\n        else:\n            self._items[name] = (price, qty)\n\n    def remove(self, name):\n        self._items.pop(name, None)\n\n    def total(self):\n        subtotal = sum(price * qty for price, qty in self._items.values())\n        return round(subtotal * (1 - self._discount), 2)\n\n    def apply_discount(self, percent):\n        self._discount = percent / 100\n",
+      "test_shopping_cart.py": "import pytest\nfrom shopping_cart import ShoppingCart\n\n\ndef test_add_items_and_total():\n    \"\"\"Test adding items to cart and calculating total.\"\"\"\n    cart = ShoppingCart()\n    cart.add(\"apple\", 1.50, 2)\n    cart.add(\"banana\", 0.75, 3)\n    assert cart.total() == 5.25\n\n\ndef test_remove_item():\n    \"\"\"Test removing an item from the cart.\"\"\"\n    cart = ShoppingCart()\n    cart.add(\"apple\", 1.50, 2)\n    cart.add(\"banana\", 0.75, 3)\n    cart.remove(\"apple\")\n    assert cart.total() == 2.25\n\n\ndef test_apply_discount():\n    \"\"\"Test applying a percentage discount to the cart.\"\"\"\n    cart = ShoppingCart()\n    cart.add(\"apple\", 10.00, 1)\n    cart.add(\"banana\", 5.00, 1)\n    cart.apply_discount(10)\n    assert cart.total() == 13.5\n\n\ndef test_remove_nonexistent_item():\n    \"\"\"Test removing an item that is not in the cart (should be no-op).\"\"\"\n    cart = ShoppingCart()\n    cart.add(\"apple\", 1.50, 2)\n    cart.remove(\"banana\")\n    assert cart.total() == 3.0\n"
+    }
+  },
+  {
+    "runId": "c9851c01-efc9-4e18-a925-f3dbe92806d9",
+    "taskId": "10-tests-validator",
+    "taskType": "tests",
+    "strategy": "pacer-cold",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.003969,
+    "totalTokens": 1581,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 9280,
+    "files": {
+      "rules.py": "def is_email(value):\n    return isinstance(value, str) and \"@\" in value and \".\" in value.split(\"@\")[-1]\n\n\ndef is_adult(value):\n    return isinstance(value, int) and not isinstance(value, bool) and value >= 18\n\n\ndef is_valid_username(value):\n    return isinstance(value, str) and len(value) >= 3\n",
+      "validator.py": "from rules import is_email, is_adult, is_valid_username\n\n\ndef validate(form):\n    errors = []\n    if not is_email(form.get(\"email\")):\n        errors.append(\"invalid email\")\n    if not is_adult(form.get(\"age\")):\n        errors.append(\"must be 18 or older\")\n    if not is_valid_username(form.get(\"username\")):\n        errors.append(\"username too short\")\n    return errors\n",
+      "test_validator.py": "from validator import validate\n\n\ndef test_valid_form():\n    \"\"\"Test a fully valid form with no errors.\"\"\"\n    form = {\n        \"email\": \"user@example.com\",\n        \"age\": 25,\n        \"username\": \"validuser\"\n    }\n    assert validate(form) == []\n\n\ndef test_missing_email():\n    \"\"\"Test a form with missing email.\"\"\"\n    form = {\n        \"email\": \"\",\n        \"age\": 25,\n        \"username\": \"validuser\"\n    }\n    assert validate(form) == [\"invalid email\"]\n\n\ndef test_email_without_at_sign():\n    \"\"\"Test a form with email missing @ symbol.\"\"\"\n    form = {\n        \"email\": \"userexample.com\",\n        \"age\": 25,\n        \"username\": \"validuser\"\n    }\n    assert validate(form) == [\"invalid email\"]\n\n\ndef test_age_below_18():\n    \"\"\"Test a form with age below 18.\"\"\"\n    form = {\n        \"email\": \"user@example.com\",\n        \"age\": 17,\n        \"username\": \"validuser\"\n    }\n    assert validate(form) == [\"must be 18 or older\"]\n\n\ndef test_non_integer_age():\n    \"\"\"Test a form with non-integer age.\"\"\"\n    form = {\n        \"email\": \"user@example.com\",\n        \"age\": \"25\",\n        \"username\": \"validuser\"\n    }\n    assert validate(form) == [\"must be 18 or older\"]\n\n\ndef test_username_too_short():\n    \"\"\"Test a form with username shorter than 3 characters.\"\"\"\n    form = {\n        \"email\": \"user@example.com\",\n        \"age\": 25,\n        \"username\": \"ab\"\n    }\n    assert validate(form) == [\"username too short\"]\n"
+    }
+  },
+  {
+    "runId": "e0aa0e2f-a024-4fee-b2e1-11080efa8099",
+    "taskId": "11-docs-geometry",
+    "taskType": "docs",
+    "strategy": "pacer-cold",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.002186,
+    "totalTokens": 886,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 8685,
+    "files": {
+      "geometry.py": "import math\n\n\ndef area_circle(radius):\n    \"\"\"\n    Calculate the area of a circle.\n    \n    Parameters:\n        radius: The radius of the circle.\n    \n    Returns:\n        The area of the circle.\n    \"\"\"\n    return math.pi * radius * radius\n\n\ndef area_rectangle(width, height):\n    \"\"\"\n    Calculate the area of a rectangle.\n    \n    Parameters:\n        width: The width of the rectangle.\n        height: The height of the rectangle.\n    \n    Returns:\n        The area of the rectangle.\n    \"\"\"\n    return width * height\n\n\ndef area_triangle(base, height):\n    \"\"\"\n    Calculate the area of a triangle.\n    \n    Parameters:\n        base: The base of the triangle.\n        height: The height of the triangle.\n    \n    Returns:\n        The area of the triangle.\n    \"\"\"\n    return 0.5 * base * height\n"
+    }
+  },
+  {
+    "runId": "85e0913c-c9e8-4a6e-8ca0-4fa1b3098dd3",
+    "taskId": "12-docs-api-reference",
+    "taskType": "docs",
+    "strategy": "pacer-cold",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.0033380000000000003,
+    "totalTokens": 1238,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 9534,
+    "files": {
+      "api.py": "\"\"\"Public API for blog post management and utilities.\n\nThis module provides functions for creating, tagging, and summarizing blog posts.\n\"\"\"\n\n\ndef _slugify(text):\n    return text.strip().lower().replace(\" \", \"-\")\n\n\ndef create_post(title, body):\n    \"\"\"Create a new blog post with auto-generated slug.\n\n    Args:\n        title: The title of the blog post.\n        body: The content body of the blog post.\n\n    Returns:\n        A dictionary containing the slug, title, and body of the post.\n    \"\"\"\n    return {\"slug\": _slugify(title), \"title\": title, \"body\": body}\n\n\ndef summarize(body, limit=100):\n    \"\"\"Truncate text to a maximum length with ellipsis indicator.\n\n    Args:\n        body: The text to summarize.\n        limit: The maximum length in characters (default: 100).\n\n    Returns:\n        The original text if it is within the limit, otherwise the text\n        truncated to limit-1 characters with an ellipsis appended.\n    \"\"\"\n    return body if len(body) <= limit else body[: limit - 1] + \"…\"\n\n\ndef tag_post(post, tags):\n    \"\"\"Add sorted unique tags to a blog post.\n\n    Args:\n        post: A dictionary representing a blog post.\n        tags: An iterable of tag strings to add to the post.\n\n    Returns:\n        A new dictionary with all post contents and a 'tags' key containing\n        sorted unique tags.\n    \"\"\"\n    post = dict(post)\n    post[\"tags\"] = sorted(set(tags))\n    return post\n"
+    }
+  },
+  {
+    "runId": "d33a5920-ae3f-4361-b2c7-75db3b8a4473",
+    "taskId": "00-example-bugfix",
+    "taskType": "bugfix",
+    "strategy": "pacer-learned",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.002732,
+    "totalTokens": 936,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 8190,
+    "files": {
+      "mathutils.py": "def sum_to_n(n):\n    if n <= 0:\n        return 0\n    total = 0\n    for i in range(1, n + 1):\n        total += i\n    return total\n"
+    }
+  },
+  {
+    "runId": "2ef2a0c7-0c1f-4af2-bd83-3620923991dd",
+    "taskId": "01-boilerplate-stack",
+    "taskType": "boilerplate",
+    "strategy": "pacer-learned",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.002048,
+    "totalTokens": 892,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 8382,
+    "files": {
+      "stack.py": "class Stack:\n    def __init__(self):\n        self._items = []\n\n    def push(self, x):\n        self._items.append(x)\n\n    def pop(self):\n        if self.is_empty():\n            raise IndexError(\"pop from empty stack\")\n        return self._items.pop()\n\n    def peek(self):\n        if self.is_empty():\n            raise IndexError(\"peek from empty stack\")\n        return self._items[-1]\n\n    def is_empty(self):\n        return len(self._items) == 0\n\n    def size(self):\n        return len(self._items)\n"
+    }
+  },
+  {
+    "runId": "f60c6ed9-56e8-439f-a75e-59e4f1852b00",
+    "taskId": "02-boilerplate-eventbus",
+    "taskType": "boilerplate",
+    "strategy": "pacer-learned",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.010781,
+    "totalTokens": 2803,
+    "escalations": 1,
+    "finalTier": "sonnet",
+    "tiersTried": [
+      "haiku",
+      "sonnet"
+    ],
+    "durationMs": 16174,
+    "files": {
+      "bus.py": "from collections import defaultdict\n\nfrom events import Event\n\n\nclass EventBus:\n    def __init__(self):\n        self._handlers = defaultdict(list)\n\n    def subscribe(self, name, handler):\n        \"\"\"Subscribe a handler to an event by name.\"\"\"\n        self._handlers[name].append(handler)\n\n    def unsubscribe(self, name, handler):\n        \"\"\"Unsubscribe a handler from an event by name.\"\"\"\n        handlers = self._handlers.get(name)\n        if handlers and handler in handlers:\n            handlers.remove(handler)\n\n    def publish(self, event):\n        \"\"\"Publish an event, calling all subscribed handlers in subscription order.\"\"\"\n        handlers = self._handlers.get(event.name)\n        if not handlers:\n            return\n        # Iterate over a copy so handlers may (un)subscribe during publish.\n        for handler in list(handlers):\n            handler(event)\n",
+      "events.py": "from dataclasses import dataclass, field\n\n\n@dataclass\nclass Event:\n    name: str\n    payload: dict = field(default_factory=dict)\n"
+    }
+  },
+  {
+    "runId": "9334704e-ff49-4f9e-8ca7-41da81e88e5a",
+    "taskId": "03-bugfix-lru",
+    "taskType": "bugfix",
+    "strategy": "pacer-learned",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.0026449999999999998,
+    "totalTokens": 1109,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 7823,
+    "files": {
+      "lru.py": "from collections import OrderedDict\n\nclass LRUCache:\n    def __init__(self, capacity):\n        self.capacity = capacity\n        self.store = OrderedDict()\n\n    def get(self, key):\n        if key not in self.store:\n            return None\n        # Move to end to mark as recently used\n        self.store.move_to_end(key)\n        return self.store[key]\n\n    def put(self, key, value):\n        if key in self.store:\n            # Move to end to mark as recently used\n            self.store.move_to_end(key)\n        elif len(self.store) >= self.capacity:\n            # Evict the least recently used (oldest) key\n            self.store.popitem(last=False)\n        self.store[key] = value\n"
+    }
+  },
+  {
+    "runId": "59536a25-40db-4b19-aa4a-41f3b2e167fb",
+    "taskId": "04-bugfix-intervals",
+    "taskType": "bugfix",
+    "strategy": "pacer-learned",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.002414,
+    "totalTokens": 1150,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 6798,
+    "files": {
+      "intervals.py": "from models import Interval\n\n\ndef merge(intervals):\n    if not intervals:\n        return []\n    sorted_intervals = sorted(intervals, key=lambda x: x.start)\n    result = [sorted_intervals[0]]\n    for cur in sorted_intervals[1:]:\n        last = result[-1]\n        if cur.start <= last.end:  # Changed from < to <=, and sorted input\n            result[-1] = Interval(last.start, max(last.end, cur.end))\n        else:\n            result.append(cur)\n    return result\n",
+      "models.py": "from dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass Interval:\n    start: int\n    end: int\n"
+    }
+  },
+  {
+    "runId": "7a0c6282-9c57-47a9-be2f-1714ae00ff80",
+    "taskId": "05-refactor-extract-pricing",
+    "taskType": "refactor",
+    "strategy": "pacer-learned",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.002039,
+    "totalTokens": 959,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 7847,
+    "files": {
+      "checkout.py": "from pricing import calculate_total\n\n\ndef checkout(items, coupon=None):\n    return calculate_total(items, coupon)\n",
+      "pricing.py": "def calculate_total(items, coupon=None):\n    total = 0.0\n    for item in items:\n        total += item[\"price\"] * item[\"qty\"]\n    if coupon:\n        total = total * (1 - coupon / 100)\n    return round(total, 2)\n"
+    }
+  },
+  {
+    "runId": "41549826-ac8f-4f63-8f64-514c1735eb89",
+    "taskId": "06-refactor-handler-registry",
+    "taskType": "refactor",
+    "strategy": "pacer-learned",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.0032,
+    "totalTokens": 1212,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 10266,
+    "files": {
+      "handlers.py": "from registry import register, dispatch\n\n\n@register(\"upper\")\ndef handle_upper(value):\n    return value.upper()\n\n\n@register(\"double\")\ndef handle_double(value):\n    return value * 2\n\n\n@register(\"negate\")\ndef handle_negate(value):\n    return -value\n\n\ndef run(name, value):\n    \"\"\"Dispatch a command by delegating to the registry.\"\"\"\n    try:\n        return dispatch(name, value)\n    except KeyError as e:\n        # Preserve original error message format for backward compatibility\n        raise ValueError(str(e)) from None\n",
+      "registry.py": "_registry = {}\n\n\ndef register(name):\n    \"\"\"Decorator to register a command handler by name.\"\"\"\n    def decorator(func):\n        _registry[name] = func\n        return func\n    return decorator\n\n\ndef dispatch(name, value):\n    \"\"\"Dispatch a command by name with the given value.\n    \n    Raises KeyError if the command name was never registered.\n    \"\"\"\n    if name not in _registry:\n        raise KeyError(f\"unknown command: {name}\")\n    return _registry[name](value)\n"
+    }
+  },
+  {
+    "runId": "3b98ae60-a410-4f73-9d81-6ed9ce6f535c",
+    "taskId": "07-algorithm-two-sum",
+    "taskType": "algorithm",
+    "strategy": "pacer-learned",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.002264,
+    "totalTokens": 860,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 6763,
+    "files": {
+      "two_sum.py": "def two_sum(nums, target):\n    \"\"\"\n    Find two distinct indices i, j such that nums[i] + nums[j] == target.\n    \n    Args:\n        nums: List of integers\n        target: Target sum\n    \n    Returns:\n        Tuple (i, j) with i < j where nums[i] + nums[j] == target, or None if no pair exists.\n    \n    Time Complexity: O(n)\n    Space Complexity: O(n)\n    \"\"\"\n    seen = {}\n    \n    for i, num in enumerate(nums):\n        complement = target - num\n        if complement in seen:\n            j = seen[complement]\n            return (j, i)\n        seen[num] = i\n    \n    return None\n"
+    }
+  },
+  {
+    "runId": "d91a7e2b-f06c-4e58-be9a-ff680dbf0c6c",
+    "taskId": "08-algorithm-weighted-schedule",
+    "taskType": "algorithm",
+    "strategy": "pacer-learned",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.003483,
+    "totalTokens": 1123,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 12781,
+    "files": {
+      "schedule.py": "def max_profit(jobs):\n    \"\"\"\n    Find the maximum profit from selecting non-overlapping jobs.\n    \n    Args:\n        jobs: List of (start, end, profit) tuples\n        \n    Returns:\n        Maximum total profit achievable by selecting non-overlapping jobs\n    \"\"\"\n    if not jobs:\n        return 0\n    \n    # Sort jobs by end time\n    sorted_jobs = sorted(jobs, key=lambda x: x[1])\n    n = len(sorted_jobs)\n    \n    # dp[i] = maximum profit considering jobs 0..i\n    dp = [0] * n\n    dp[0] = sorted_jobs[0][2]\n    \n    for i in range(1, n):\n        current_profit = sorted_jobs[i][2]\n        \n        # Find the latest job that doesn't overlap with job i\n        latest_non_overlapping = -1\n        left, right = 0, i - 1\n        while left <= right:\n            mid = (left + right) // 2\n            if sorted_jobs[mid][1] <= sorted_jobs[i][0]:\n                latest_non_overlapping = mid\n                left = mid + 1\n            else:\n                right = mid - 1\n        \n        # Case 1: Include current job\n        if latest_non_overlapping != -1:\n            current_profit += dp[latest_non_overlapping]\n        \n        # Case 2: Exclude current job\n        dp[i] = max(dp[i - 1], current_profit)\n    \n    return dp[n - 1]\n"
+    }
+  },
+  {
+    "runId": "b9a2c941-6cd4-4db1-b06c-9b6fecae16f5",
+    "taskId": "09-tests-shopping-cart",
+    "taskType": "tests",
+    "strategy": "pacer-learned",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.013517000000000001,
+    "totalTokens": 3535,
+    "escalations": 1,
+    "finalTier": "sonnet",
+    "tiersTried": [
+      "haiku",
+      "sonnet"
+    ],
+    "durationMs": 16755,
+    "files": {
+      "shopping_cart.py": "class ShoppingCart:\n    def __init__(self):\n        self._items = {}\n        self._discount = 0.0\n\n    def add(self, name, price, qty=1):\n        if name in self._items:\n            self._items[name] = (price, self._items[name][1] + qty)\n        else:\n            self._items[name] = (price, qty)\n\n    def remove(self, name):\n        self._items.pop(name, None)\n\n    def total(self):\n        subtotal = sum(price * qty for price, qty in self._items.values())\n        return round(subtotal * (1 - self._discount), 2)\n\n    def apply_discount(self, percent):\n        self._discount = percent / 100\n",
+      "test_shopping_cart.py": "from shopping_cart import ShoppingCart\n\n\ndef test_add_items_and_total():\n    \"\"\"Test adding items to cart and calculating total.\"\"\"\n    cart = ShoppingCart()\n    cart.add(\"apple\", 1.50, 2)\n    cart.add(\"banana\", 0.75, 3)\n    # 1.50 * 2 + 0.75 * 3 = 3.00 + 2.25 = 5.25\n    assert cart.total() == 5.25\n\n\ndef test_remove_item():\n    \"\"\"Test removing an item from the cart.\"\"\"\n    cart = ShoppingCart()\n    cart.add(\"apple\", 1.50, 2)\n    cart.add(\"banana\", 0.75, 3)\n    cart.remove(\"apple\")\n    assert cart.total() == 2.25\n\n\ndef test_apply_percentage_discount():\n    \"\"\"Test applying a percentage discount to the cart total.\"\"\"\n    cart = ShoppingCart()\n    cart.add(\"apple\", 10.00, 1)\n    cart.add(\"banana\", 5.00, 1)\n    cart.apply_discount(10)\n    assert cart.total() == 13.5\n\n\ndef test_remove_nonexistent_item():\n    \"\"\"Test that removing a non-existent item is a no-op.\"\"\"\n    cart = ShoppingCart()\n    cart.add(\"apple\", 1.50, 2)\n    cart.remove(\"banana\")\n    assert cart.total() == 3.0\n"
+    }
+  },
+  {
+    "runId": "4a5947da-dcec-467f-b90d-f0155cb4ae52",
+    "taskId": "10-tests-validator",
+    "taskType": "tests",
+    "strategy": "pacer-learned",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.004274,
+    "totalTokens": 1642,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 9089,
+    "files": {
+      "rules.py": "def is_email(value):\n    return isinstance(value, str) and \"@\" in value and \".\" in value.split(\"@\")[-1]\n\n\ndef is_adult(value):\n    return isinstance(value, int) and not isinstance(value, bool) and value >= 18\n\n\ndef is_valid_username(value):\n    return isinstance(value, str) and len(value) >= 3\n",
+      "validator.py": "from rules import is_email, is_adult, is_valid_username\n\n\ndef validate(form):\n    errors = []\n    if not is_email(form.get(\"email\")):\n        errors.append(\"invalid email\")\n    if not is_adult(form.get(\"age\")):\n        errors.append(\"must be 18 or older\")\n    if not is_valid_username(form.get(\"username\")):\n        errors.append(\"username too short\")\n    return errors\n",
+      "test_validator.py": "import pytest\nfrom validator import validate\n\n\ndef test_valid_form():\n    \"\"\"Test that a fully valid form returns no errors.\"\"\"\n    form = {\n        \"email\": \"user@example.com\",\n        \"age\": 25,\n        \"username\": \"john_doe\"\n    }\n    errors = validate(form)\n    assert errors == []\n\n\ndef test_missing_email():\n    \"\"\"Test that a missing email returns an error.\"\"\"\n    form = {\n        \"email\": \"\",\n        \"age\": 25,\n        \"username\": \"john_doe\"\n    }\n    errors = validate(form)\n    assert \"invalid email\" in errors\n\n\ndef test_email_without_at_symbol():\n    \"\"\"Test that an email without '@' returns an error.\"\"\"\n    form = {\n        \"email\": \"userexample.com\",\n        \"age\": 25,\n        \"username\": \"john_doe\"\n    }\n    errors = validate(form)\n    assert \"invalid email\" in errors\n\n\ndef test_age_below_18():\n    \"\"\"Test that an age below 18 returns an error.\"\"\"\n    form = {\n        \"email\": \"user@example.com\",\n        \"age\": 17,\n        \"username\": \"john_doe\"\n    }\n    errors = validate(form)\n    assert \"must be 18 or older\" in errors\n\n\ndef test_non_integer_age():\n    \"\"\"Test that a non-integer age returns an error.\"\"\"\n    form = {\n        \"email\": \"user@example.com\",\n        \"age\": \"25\",\n        \"username\": \"john_doe\"\n    }\n    errors = validate(form)\n    assert \"must be 18 or older\" in errors\n\n\ndef test_username_too_short():\n    \"\"\"Test that a username shorter than 3 characters returns an error.\"\"\"\n    form = {\n        \"email\": \"user@example.com\",\n        \"age\": 25,\n        \"username\": \"ab\"\n    }\n    errors = validate(form)\n    assert \"username too short\" in errors\n"
+    }
+  },
+  {
+    "runId": "e96ee40d-c1f0-4d7d-8021-5562f217fcd9",
+    "taskId": "11-docs-geometry",
+    "taskType": "docs",
+    "strategy": "pacer-learned",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.002256,
+    "totalTokens": 900,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 8777,
+    "files": {
+      "geometry.py": "import math\n\n\ndef area_circle(radius):\n    \"\"\"\n    Calculate the area of a circle.\n    \n    Parameters:\n        radius: The radius of the circle.\n    \n    Returns:\n        The area of the circle.\n    \"\"\"\n    return math.pi * radius * radius\n\n\ndef area_rectangle(width, height):\n    \"\"\"\n    Calculate the area of a rectangle.\n    \n    Parameters:\n        width: The width of the rectangle.\n        height: The height of the rectangle.\n    \n    Returns:\n        The area of the rectangle.\n    \"\"\"\n    return width * height\n\n\ndef area_triangle(base, height):\n    \"\"\"\n    Calculate the area of a triangle.\n    \n    Parameters:\n        base: The base of the triangle.\n        height: The height of the triangle.\n    \n    Returns:\n        The area of the triangle.\n    \"\"\"\n    return 0.5 * base * height\n"
+    }
+  },
+  {
+    "runId": "ee50cad0-946d-4d5e-99f4-d569db2bf8ce",
+    "taskId": "12-docs-api-reference",
+    "taskType": "docs",
+    "strategy": "pacer-learned",
+    "client": "bench",
+    "passed": true,
+    "totalCostUsd": 0.003228,
+    "totalTokens": 1216,
+    "escalations": 0,
+    "finalTier": "haiku",
+    "tiersTried": [
+      "haiku"
+    ],
+    "durationMs": 9472,
+    "files": {
+      "api.py": "\"\"\"API functions for managing blog posts.\n\nThis module provides utilities for creating, summarizing, and tagging blog posts.\n\"\"\"\n\n\ndef _slugify(text):\n    return text.strip().lower().replace(\" \", \"-\")\n\n\ndef create_post(title, body):\n    \"\"\"Create a new blog post.\n\n    Args:\n        title: The title of the post.\n        body: The content body of the post.\n\n    Returns:\n        A dictionary containing the post's slug, title, and body.\n    \"\"\"\n    return {\"slug\": _slugify(title), \"title\": title, \"body\": body}\n\n\ndef summarize(body, limit=100):\n    \"\"\"Truncate text to a specified character limit.\n\n    Args:\n        body: The text to summarize.\n        limit: The maximum number of characters to include (default: 100).\n\n    Returns:\n        The original text if within the limit, otherwise the text truncated\n        to limit - 1 characters with an ellipsis appended.\n    \"\"\"\n    return body if len(body) <= limit else body[: limit - 1] + \"…\"\n\n\ndef tag_post(post, tags):\n    \"\"\"Add sorted unique tags to a blog post.\n\n    Args:\n        post: A dictionary representing the post.\n        tags: An iterable of tag strings to add to the post.\n\n    Returns:\n        A new dictionary with the post's contents and a 'tags' key containing\n        the sorted, deduplicated tags.\n    \"\"\"\n    post = dict(post)\n    post[\"tags\"] = sorted(set(tags))\n    return post\n"
+    }
+  }
+]
