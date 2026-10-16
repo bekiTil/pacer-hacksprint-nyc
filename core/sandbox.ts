@@ -32,13 +32,13 @@ function daytona(): Daytona {
   return client;
 }
 
-function truncate(s: string): string {
-  return s.length <= MAX_OUTPUT ? s : `${s.slice(0, 600)}\n...[truncated]...\n${s.slice(-(MAX_OUTPUT - 620))}`;
+function truncate(s: string, max = MAX_OUTPUT): string {
+  return s.length <= max ? s : `${s.slice(0, Math.floor(max * 0.3))}\n...[truncated]...\n${s.slice(-Math.floor(max * 0.7))}`;
 }
 
 export interface SandboxSession {
   id: string;
-  test(files: Record<string, string>, testFiles: Record<string, string>, testCmd: string): Promise<TestRunResult>;
+  test(files: Record<string, string>, testFiles: Record<string, string>, testCmd: string, opts?: { maxOutput?: number }): Promise<TestRunResult>;
   close(): Promise<void>;
 }
 
@@ -67,7 +67,7 @@ export async function openSandbox(): Promise<SandboxSession> {
 
   return {
     id: sandbox.id,
-    async test(files, testFiles, testCmd) {
+    async test(files, testFiles, testCmd, opts) {
       if (!pytestReady) {
         await sandbox.process.executeCommand('python -m pytest --version || pip install -q pytest', undefined, undefined, 120);
         pytestReady = true;
@@ -87,7 +87,7 @@ export async function openSandbox(): Promise<SandboxSession> {
         Object.entries(all).map(([p, content]) => ({ source: Buffer.from(content, 'utf8'), destination: `${WORKDIR}/${p}` })),
       );
       const res = await sandbox.process.executeCommand(testCmd, WORKDIR, undefined, TEST_TIMEOUT_S);
-      return { passed: res.exitCode === 0, output: truncate(res.result ?? '') };
+      return { passed: res.exitCode === 0, output: truncate(res.result ?? '', opts?.maxOutput) };
     },
     async close() {
       if (closed) return;

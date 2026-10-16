@@ -34,7 +34,7 @@ export async function buildDemo(
     }
     const sandbox = await openSandbox();
     try {
-      const run = await sandbox.test({ ...files, 'run_demo.py': `${demo}\n` }, {}, 'timeout 30 python run_demo.py');
+      const run = await sandbox.test({ ...files, 'run_demo.py': `${demo}\n` }, {}, 'timeout 30 python run_demo.py', { maxOutput: 20_000 });
       if (run.passed) return { demo: `${demo}\n`, output: run.output };
       feedback = `\n\nYour previous run_demo.py failed when run:\n${run.output.slice(-1200)}\nFix it.`;
     } finally {
