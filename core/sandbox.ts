@@ -8,6 +8,23 @@ const WORKDIR = 'workspace';
 const MAX_OUTPUT = 2000;
 const TEST_TIMEOUT_S = 90;
 
+// Daytona org limit is 10 CPUs total; cap concurrent sandboxes so parallel runs queue instead of failing.
+const MAX_SANDBOXES = Number(process.env.PACER_MAX_SANDBOXES ?? 4);
+let active = 0;
+const waiters: (() => void)[] = [];
+async function acquire(): Promise<void> {
+  if (active < MAX_SANDBOXES) {
+    active++;
+    return;
+  }
+  await new Promise<void>((resolve) => waiters.push(resolve)); // slot handed over by release()
+}
+function release(): void {
+  const next = waiters.shift();
+  if (next) next();
+  else active--;
+}
+
 let client: Daytona | null = null;
 function daytona(): Daytona {
   if (!process.env.DAYTONA_API_KEY) throw new Error('DAYTONA_API_KEY is not set (.env.local)');
@@ -26,12 +43,26 @@ export interface SandboxSession {
 }
 
 export async function openSandbox(): Promise<SandboxSession> {
-  const sandbox: Sandbox = await daytona().create({
+  await acquire();
+  let sandbox: Sandbox;
+  const params = {
     language: 'python',
     autoStopInterval: 15, // safety net if close() never runs
     autoDeleteInterval: 0,
     labels: { app: 'pacer' },
-  });
+  };
+  try {
+    try {
+      sandbox = await daytona().create(params, { timeout: 120 });
+    } catch (err) {
+      console.warn(`[sandbox] create failed, retrying once: ${String(err).slice(0, 120)}`);
+      sandbox = await daytona().create(params, { timeout: 120 });
+    }
+  } catch (err) {
+    release();
+    throw err;
+  }
+  let closed = false;
   let pytestReady = false;
 
   return {
@@ -59,10 +90,14 @@ export async function openSandbox(): Promise<SandboxSession> {
       return { passed: res.exitCode === 0, output: truncate(res.result ?? '') };
     },
     async close() {
+      if (closed) return;
+      closed = true;
       try {
         await sandbox.delete();
       } catch (err) {
         console.warn(`[sandbox] failed to delete ${sandbox.id}: ${String(err)}`);
+      } finally {
+        release();
       }
     },
   };
