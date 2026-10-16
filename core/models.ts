@@ -14,19 +14,19 @@ export interface TierInfo {
 export const TIERS: Record<Tier, TierInfo> = {
   haiku: {
     label: 'Claude Haiku 5.5',
-    modelId: process.env.BEDROCK_MODEL_HAIKU ?? 'us.anthropic.claude-haiku-5-5',
+    modelId: process.env.BEDROCK_MODEL_HAIKU || 'us.anthropic.claude-haiku-5-5',
     inPerMTok: 0.1,
     outPerMTok: 0.5,
   },
   sonnet: {
     label: 'Claude Sonnet 5.5',
-    modelId: process.env.BEDROCK_MODEL_SONNET ?? 'us.anthropic.claude-sonnet-5-5',
+    modelId: process.env.BEDROCK_MODEL_SONNET || 'us.anthropic.claude-sonnet-5-5',
     inPerMTok: 2,
     outPerMTok: 10,
   },
   opus: {
     label: 'Claude Opus 5.5',
-    modelId: process.env.BEDROCK_MODEL_OPUS ?? 'us.anthropic.claude-opus-5-5',
+    modelId: process.env.BEDROCK_MODEL_OPUS || 'us.anthropic.claude-opus-5-5',
     inPerMTok: 4,
     outPerMTok: 20,
   },
