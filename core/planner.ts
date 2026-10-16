@@ -1,6 +1,6 @@
 // Owner: Yared (Engine). Cross-track export: planTask (plugin pacer_plan; executor).
 // Turns a profile + budget + scorecard into a tiered plan.
-import type { Difficulty, Plan, ScorecardEntry, Step, Strategy, TaskType, Tier } from './types';
+import type { Difficulty, Plan, ScorecardEntry, Step, Strategy, Subtask, TaskType, Tier } from './types';
 import { TIER_ORDER } from './types';
 import { costUsd } from './models';
 import { filesTokenEstimate, profileTask, type Profile } from './profiler';
@@ -110,4 +110,34 @@ export async function planTask(
   const profile = await profileTask(prompt, files);
   const inputTokens = filesTokenEstimate(files) + Math.ceil(prompt.length / 3.5) + 400;
   return buildPlan(profile, inputTokens, budgetUsd, strategy, await getScorecard());
+}
+
+/** Plan for a decomposed task: one implement step per subtask, each on its own tier. */
+export function buildSubtaskPlan(
+  task: { type: TaskType; difficulty: Difficulty; subtasks: Subtask[] },
+  inputTokens: number,
+  budgetUsd: number,
+  strategy: Strategy,
+  scorecard: ScorecardEntry[],
+): Plan {
+  const reasons: string[] = [];
+  const steps: Step[] = task.subtasks.map((s) => {
+    let tier: Tier;
+    if (strategy === 'all-opus' || strategy === 'all-haiku') tier = strategy === 'all-opus' ? 'opus' : 'haiku';
+    else {
+      const learned = strategy === 'pacer-learned' ? learnedTier(scorecard, s.kind) : null;
+      tier = learned ?? coldImplementTier(s.difficulty);
+      reasons.push(`${s.title}: ${learned ? `scorecard → ${tier}` : `d${s.difficulty} → ${tier}`}`);
+    }
+    return { name: 'implement', tier, estTokens: inputTokens + 1500, subtask: s.title };
+  });
+  if (!reasons.length) reasons.push(`baseline: ${steps[0]?.tier} for every step, one same-tier retry each`);
+  return {
+    taskType: task.type,
+    difficulty: task.difficulty,
+    steps,
+    estCostUsd: steps.reduce((n, s) => n + estimateStepCost(s.tier, inputTokens, 1500), 0),
+    budgetUsd,
+    reason: `${task.subtasks.length} steps, each tested in Daytona before the next · ${reasons.join(' · ')}`,
+  };
 }

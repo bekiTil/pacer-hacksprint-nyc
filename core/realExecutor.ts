@@ -3,11 +3,11 @@
 // Steps pass short handoff notes instead of full chat history.
 import { randomUUID } from 'node:crypto';
 import { context, trace } from '@opentelemetry/api';
-import type { BenchTask, Executor, RunEvent, RunOptions, RunResult, StepName, Tier } from './types';
+import type { BenchTask, Executor, RunEvent, RunOptions, RunResult, SpanAttrs, StepName, Subtask, Tier } from './types';
 import { ATTR } from './types';
 import { callText } from './llm';
 import { nextTier } from './models';
-import { buildPlan } from './planner';
+import { buildPlan, buildSubtaskPlan } from './planner';
 import { filesTokenEstimate, profileTask } from './profiler';
 import { openSandbox, type SandboxSession } from './sandbox';
 import { getScorecard, recordResult } from './scorecard';
@@ -53,6 +53,7 @@ async function* runTask(task: BenchTask, opts: RunOptions): AsyncGenerator<RunEv
   let files = { ...task.files };
   let passed = false;
   let sandbox: SandboxSession | null = null;
+  const stepRecords: { subtask: Subtask; tiers: Tier[]; passed: boolean }[] = [];
 
   // One root span per run; every step span is parented to it (works once tracing has a context manager).
   const root = trace.getTracer('pacer').startSpan('pacer.run', { attributes: base });
@@ -63,7 +64,8 @@ async function* runTask(task: BenchTask, opts: RunOptions): AsyncGenerator<RunEv
     // 1. Profile + plan. The bench knows the true task type, so it overrides the profiler's guess.
     // Baselines don't route, so they skip profiling. Pacer pays for its Haiku profile; that overhead is
     // folded into the first step_end so totals stay honest and equal the sum of step_end costs.
-    const profile = isPacer
+    const subtasks = task.subtasks?.length ? task.subtasks : null;
+    const profile = isPacer && !subtasks
       ? await withSpan('pacer.profile', base, () => profileTask(task.prompt, task.files))
       : { taskType: task.type, difficulty: task.difficulty, needsPlan: false, estOutputTokens: 2000, tokensIn: 0, tokensOut: 0, costUsd: 0 };
     let overhead = { tokensIn: profile.tokensIn, tokensOut: profile.tokensOut, costUsd: profile.costUsd };
@@ -75,7 +77,9 @@ async function* runTask(task: BenchTask, opts: RunOptions): AsyncGenerator<RunEv
       return c;
     };
     const inputTokens = filesTokenEstimate(task.files) + Math.ceil(task.prompt.length / 3.5) + 400;
-    const plan = buildPlan({ ...profile, taskType: task.type }, inputTokens, opts.budgetUsd, opts.strategy, await getScorecard());
+    const plan = subtasks
+      ? buildSubtaskPlan({ type: task.type, difficulty: task.difficulty, subtasks }, inputTokens, opts.budgetUsd, opts.strategy, await getScorecard())
+      : buildPlan({ ...profile, taskType: task.type }, inputTokens, opts.budgetUsd, opts.strategy, await getScorecard());
     yield { kind: 'plan', plan };
 
     // 2. Optional planning step → handoff note.
@@ -99,56 +103,88 @@ async function* runTask(task: BenchTask, opts: RunOptions): AsyncGenerator<RunEv
       yield { kind: 'step_end', step: 'plan', tier: planStep.tier, ...c, handoff };
     }
 
-    // 3. Implement → test → fix loop.
-    let tier: Tier = plan.steps.find((s) => s.name === 'implement')!.tier;
-    let lastTestOutput = '';
-    const maxAttempts = isPacer ? 4 : 2; // baselines: one same-tier retry
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      const step: StepName = attempt === 0 ? 'implement' : 'fix';
-      if (!tiersTried.includes(tier)) tiersTried.push(tier);
-      yield { kind: 'step_start', step, tier };
+    // 3. Implement → test → fix, once per segment. A plain task is one segment tested against all its
+    // tests; a decomposed task has one segment per subtask, gated by that step's tests plus all earlier ones.
+    const implSteps = plan.steps.filter((s) => s.name === 'implement');
+    const segments: { subtask?: Subtask; index: number; tier: Tier; testFiles: Record<string, string>; testCmd: string }[] = subtasks
+      ? subtasks.map((st, i) => {
+          const names = subtasks.slice(0, i + 1).map((x) => x.testFile);
+          return {
+            subtask: st,
+            index: i,
+            tier: implSteps[i].tier,
+            testFiles: Object.fromEntries(names.map((n) => [n, task.testFiles[n]])),
+            testCmd: `python -m pytest -q ${names.join(' ')}`,
+          };
+        })
+      : [{ index: 0, tier: implSteps[0].tier, testFiles: task.testFiles, testCmd: task.testCmd }];
 
-      const prompt = [
-        `TASK:\n${task.prompt}`,
-        handoff && `HANDOFF NOTE FROM PREVIOUS STEP:\n${handoff}`,
-        `CURRENT FILES:\n${renderFiles(files)}`,
-        lastTestOutput && `THE PREVIOUS ATTEMPT FAILED THESE TESTS (tests are hidden; fix the code):\n${lastTestOutput}`,
-      ]
-        .filter(Boolean)
-        .join('\n\n');
+    passed = true;
+    for (const seg of segments) {
+      const label = seg.subtask ? `${seg.index + 1}. ${seg.subtask.title}` : undefined;
+      const segAttrs: SpanAttrs = seg.subtask ? { 'pacer.subtask': label!, 'pacer.subtask.kind': seg.subtask.kind } : {};
+      const segTiers: Tier[] = [];
+      let tier = seg.tier;
+      let lastTestOutput = '';
+      let segPassed = false;
+      const maxAttempts = isPacer ? 4 : 2; // baselines: one same-tier retry
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        const step: StepName = attempt === 0 ? 'implement' : 'fix';
+        if (!tiersTried.includes(tier)) tiersTried.push(tier);
+        if (!segTiers.includes(tier)) segTiers.push(tier);
+        yield { kind: 'step_start', step, tier, subtask: label };
 
-      const res = await withSpan(`pacer.step.${step}`, { ...base, [ATTR.tier]: tier }, async (span) => {
-        const r = await callText({ tier, functionId: step, system: CODER_SYSTEM, prompt, maxOutputTokens: 16000 });
-        span.setAttributes({ [ATTR.tokensIn]: r.tokensIn, [ATTR.tokensOut]: r.tokensOut, [ATTR.costUsd]: r.costUsd });
-        return r;
-      });
-      const c = charge(res);
-      const parsed = parseFiles(res.text);
-      for (const [p, c] of Object.entries(parsed.files)) if (!(p in task.testFiles)) files[p] = c;
-      handoff = parsed.handoff || handoff;
-      yield { kind: 'step_end', step, tier, ...c, handoff };
+        const stepList = subtasks
+          ? `STEPS:\n${subtasks.map((x, i) => `${i + 1}. ${x.title}: ${x.description}${i < seg.index ? ' (done)' : i === seg.index ? '   <-- IMPLEMENT THIS STEP NOW' : ' (later)'}`).join('\n')}\n\nImplement ONLY the current step and keep earlier steps working. Later steps may stay as stubs.`
+          : '';
+        const prompt = [
+          `TASK:\n${task.prompt}`,
+          stepList,
+          handoff && `HANDOFF NOTE FROM PREVIOUS STEP:\n${handoff}`,
+          `CURRENT FILES:\n${renderFiles(files)}`,
+          lastTestOutput && `THE PREVIOUS ATTEMPT FAILED THESE TESTS (tests are hidden; fix the code):\n${lastTestOutput}`,
+        ]
+          .filter(Boolean)
+          .join('\n\n');
 
-      sandbox ??= await openSandbox();
-      const test = await withSpan('pacer.sandbox.test', { ...base, [ATTR.tier]: tier }, async (span) => {
-        const t = await sandbox!.test(files, task.testFiles, task.testCmd);
-        span.setAttributes({ [ATTR.testsPassed]: t.passed });
-        return t;
-      });
-      yield { kind: 'test', tier, passed: test.passed, output: test.output };
-      if (test.passed) {
-        passed = true;
-        break;
+        const res = await withSpan(`pacer.step.${step}`, { ...base, ...segAttrs, [ATTR.tier]: tier }, async (span) => {
+          const r = await callText({ tier, functionId: step, system: CODER_SYSTEM, prompt, maxOutputTokens: 16000 });
+          span.setAttributes({ [ATTR.tokensIn]: r.tokensIn, [ATTR.tokensOut]: r.tokensOut, [ATTR.costUsd]: r.costUsd });
+          return r;
+        });
+        const c = charge(res);
+        const parsed = parseFiles(res.text);
+        for (const [p, content] of Object.entries(parsed.files)) if (!(p in task.testFiles)) files[p] = content;
+        handoff = parsed.handoff || handoff;
+        yield { kind: 'step_end', step, tier, ...c, handoff, subtask: label };
+
+        sandbox ??= await openSandbox();
+        const test = await withSpan('pacer.sandbox.test', { ...base, ...segAttrs, [ATTR.tier]: tier }, async (span) => {
+          const t = await sandbox!.test(files, seg.testFiles, seg.testCmd);
+          span.setAttributes({ [ATTR.testsPassed]: t.passed });
+          return t;
+        });
+        yield { kind: 'test', tier, passed: test.passed, output: test.output, subtask: label };
+        if (test.passed) {
+          segPassed = true;
+          break;
+        }
+        lastTestOutput = test.output;
+
+        if (attempt === maxAttempts - 1) break;
+        if (totalCost >= opts.budgetUsd) break; // budget exhausted: stop and report what we have
+        if (isPacer) {
+          const up = nextTier(tier);
+          if (!up) break; // opus failed: give up
+          yield { kind: 'escalate', from: tier, to: up, reason: `${label ? `step ${seg.index + 1} ` : ''}tests failed on ${tier}` };
+          escalations++;
+          tier = up;
+        }
       }
-      lastTestOutput = test.output;
-
-      if (attempt === maxAttempts - 1) break;
-      if (totalCost >= opts.budgetUsd) break; // budget exhausted: stop and report what we have
-      if (isPacer) {
-        const up = nextTier(tier);
-        if (!up) break; // opus failed: give up
-        yield { kind: 'escalate', from: tier, to: up, reason: `tests failed on ${tier}` };
-        escalations++;
-        tier = up;
+      if (seg.subtask) stepRecords.push({ subtask: seg.subtask, tiers: segTiers, passed: segPassed });
+      if (!segPassed) {
+        passed = false;
+        break; // later steps build on this one
       }
     }
   } catch (err) {
@@ -177,7 +213,14 @@ async function* runTask(task: BenchTask, opts: RunOptions): AsyncGenerator<RunEv
     durationMs: Date.now() - start,
     files,
   };
-  await recordResult(result);
+  if (stepRecords.length) {
+    // Decomposed task: the scorecard learns per step kind (algorithm, bugfix, ...), not per whole task.
+    for (const [i, r] of stepRecords.entries()) {
+      await recordResult({ ...result, runId: `${runId}#${i + 1}`, taskId: `${task.id}#${i + 1}`, taskType: r.subtask.kind, passed: r.passed, tiersTried: r.tiers, escalations: r.tiers.length - 1, finalTier: r.tiers[r.tiers.length - 1], totalCostUsd: totalCost / stepRecords.length, files: {} });
+    }
+  } else {
+    await recordResult(result);
+  }
   yield { kind: 'done', result };
 }
 

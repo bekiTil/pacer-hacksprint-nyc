@@ -14,6 +14,16 @@ export type Client = 'web' | 'claude-code' | 'bench';
 
 export type Difficulty = 1 | 2 | 3 | 4 | 5;
 
+/** One step of a decomposed task (user-generated tasks). Tests for step N live in testFile and run
+ * together with the tests of all earlier steps, so each step has its own quality gate. */
+export interface Subtask {
+  title: string;
+  description: string;
+  kind: TaskType;
+  difficulty: Difficulty;
+  testFile: string; // e.g. "test_step1.py" (a key of BenchTask.testFiles)
+}
+
 /** Loaded from tasks/<id>/ by core/tasks.ts. */
 export interface BenchTask {
   id: string; // folder name under tasks/
@@ -24,6 +34,8 @@ export interface BenchTask {
   files: Record<string, string>; // starter files, visible to the model (relative path → content)
   testFiles: Record<string, string>; // hidden tests, uploaded only to the sandbox (relative path → content)
   testCmd: string; // e.g. "python -m pytest -q"
+  subtasks?: Subtask[]; // present on decomposed (user-generated) tasks
+  source?: 'bench' | 'user';
 }
 
 /** Shape of tasks/<id>/task.json on disk. */
@@ -34,6 +46,8 @@ export interface TaskManifest {
   difficulty: Difficulty;
   prompt: string;
   testCmd: string;
+  subtasks?: Subtask[];
+  source?: 'bench' | 'user';
 }
 
 export type StepName = 'plan' | 'implement' | 'fix';
@@ -42,6 +56,7 @@ export interface Step {
   name: StepName;
   tier: Tier;
   estTokens: number;
+  subtask?: string; // title of the subtask this step implements (decomposed tasks)
 }
 
 export interface Plan {
@@ -76,9 +91,9 @@ export interface RunResult {
 
 export type RunEvent =
   | { kind: 'plan'; plan: Plan }
-  | { kind: 'step_start'; step: StepName; tier: Tier }
-  | { kind: 'step_end'; step: StepName; tier: Tier; tokensIn: number; tokensOut: number; costUsd: number; handoff: string }
-  | { kind: 'test'; tier: Tier; passed: boolean; output: string }
+  | { kind: 'step_start'; step: StepName; tier: Tier; subtask?: string }
+  | { kind: 'step_end'; step: StepName; tier: Tier; tokensIn: number; tokensOut: number; costUsd: number; handoff: string; subtask?: string }
+  | { kind: 'test'; tier: Tier; passed: boolean; output: string; subtask?: string }
   | { kind: 'escalate'; from: Tier; to: Tier; reason: string }
   | { kind: 'error'; message: string }
   | { kind: 'done'; result: RunResult };

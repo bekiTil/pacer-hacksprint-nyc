@@ -1,5 +1,5 @@
 // Owner: Yared. Benchmark: every task × every strategy through the real executor → data/results.json.
-// Usage: npx tsx scripts/bench.ts [--tasks id1,id2] [--strategies all-haiku,pacer-cold] [--concurrency 4] [--budget 1] [--keep-scorecard]
+// Usage: npx tsx scripts/bench.ts [--tasks id1,id2] [--strategies all-haiku,pacer-cold] [--concurrency 4] [--budget 1] [--keep-scorecard] [--out data/other.json]
 // Strategies run in order (all-haiku, all-opus, pacer-cold, pacer-learned) so pacer-learned
 // learns from everything before it. Tasks within a strategy run in parallel.
 import '../core/env';
@@ -98,10 +98,10 @@ async function main() {
     results.push(...(await pool(tasks, concurrency, (t) => runOne(t, s, budget))));
   }
 
-  const out = path.join(process.cwd(), DATA.results);
+  const out = path.join(process.cwd(), arg('out') ?? DATA.results);
   fs.mkdirSync(path.dirname(out), { recursive: true });
   fs.writeFileSync(out, JSON.stringify(results, null, 2));
-  console.log(`\nWrote ${results.length} results → ${DATA.results}`);
+  console.log(`\nWrote ${results.length} results → ${path.relative(process.cwd(), out)}`);
   summarize(results, strategies);
   await shutdownTracing();
 }
