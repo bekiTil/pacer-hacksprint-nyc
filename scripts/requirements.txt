@@ -1,0 +1,2 @@
+arize>=8.59
+python-dotenv

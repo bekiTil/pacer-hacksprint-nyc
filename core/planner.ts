@@ -4,7 +4,7 @@ import type { Difficulty, Plan, ScorecardEntry, Step, Strategy, Subtask, TaskTyp
 import { TIER_ORDER } from './types';
 import { costUsd } from './models';
 import { filesTokenEstimate, profileTask, type Profile } from './profiler';
-import { getScorecard } from './scorecard';
+import { getScorecard, scorecardSource } from './scorecard';
 
 export const RESERVE_FRACTION = 0.3; // budget held back for escalations
 const PLAN_OUTPUT_TOKENS = 600;
@@ -61,7 +61,7 @@ export function buildPlan(
     const e = learned ? entry(scorecard, profile.taskType, learned) : undefined;
     reasons.push(
       learned && e
-        ? `scorecard: ${learned} passed ${Math.round(e.passRate * 100)}% of ${e.runs} ${profile.taskType} runs → start ${learned}`
+        ? `${scorecardSource() === 'arize' ? 'Arize traces' : 'local scorecard'}: ${learned} passed ${Math.round(e.passRate * 100)}% of ${e.runs} ${profile.taskType} tests → start ${learned}`
         : `difficulty ${profile.difficulty}/5 → start ${implTier}`,
     );
     if (withPlan) reasons.push('sonnet writes a short plan first');
@@ -127,7 +127,10 @@ export function buildSubtaskPlan(
     else {
       const learned = strategy === 'pacer-learned' ? learnedTier(scorecard, s.kind) : null;
       tier = learned ?? coldImplementTier(s.difficulty);
-      reasons.push(`${s.title}: ${learned ? `scorecard → ${tier}` : `d${s.difficulty} → ${tier}`}`);
+      const e = learned ? scorecard.find((x) => x.taskType === s.kind && x.tier === learned) : undefined;
+      reasons.push(
+        `${s.title}: ${learned && e ? `${scorecardSource() === 'arize' ? 'Arize' : 'scorecard'} says ${tier} passes ${Math.round(e.passRate * 100)}% of ${s.kind} steps` : `d${s.difficulty} → ${tier}`}`,
+      );
     }
     return { name: 'implement', tier, estTokens: inputTokens + 1500, subtask: s.title };
   });

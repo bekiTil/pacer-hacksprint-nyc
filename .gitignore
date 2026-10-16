@@ -48,3 +48,6 @@ next-env.d.ts
 data/runs.jsonl
 !.env.example
 data/scorecard.json
+
+# python venv for the Arize export bridge
+.venv/

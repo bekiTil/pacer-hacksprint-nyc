@@ -53,6 +53,7 @@ Two ways to use it: a **web app** (live run timeline and results dashboard) and 
 nvm use 22                     # Node 22+
 npm install
 npm run typecheck && npm run contract   # verifies both tracks still fit together
+python3 -m venv .venv && .venv/bin/pip install -r scripts/requirements.txt   # Arize export bridge (Pacer's memory)
 cp .env.example .env.local     # fill in the keys below
 npm run dev                    # web app → http://localhost:3000
 npx tsx scripts/bench.ts       # benchmark: 12 tasks × 4 strategies → data/results.json
