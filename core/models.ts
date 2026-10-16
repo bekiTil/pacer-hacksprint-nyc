@@ -13,10 +13,11 @@ export interface TierInfo {
 // without touching code. Prices are Anthropic list rates; TODO(yared): confirm against Bedrock pricing.
 export const TIERS: Record<Tier, TierInfo> = {
   haiku: {
-    label: 'Claude Haiku 5.5',
-    modelId: process.env.BEDROCK_MODEL_HAIKU || 'us.anthropic.claude-haiku-5-5',
-    inPerMTok: 0.1,
-    outPerMTok: 0.5,
+    // Haiku 5.5 is blocked on our Bedrock account (private marketplace eligibility), so we use Haiku 4.5.
+    label: 'Claude Haiku 4.5',
+    modelId: process.env.BEDROCK_MODEL_HAIKU || 'us.anthropic.claude-haiku-4-5-20251001-v1:0',
+    inPerMTok: 1,
+    outPerMTok: 5,
   },
   sonnet: {
     label: 'Claude Sonnet 5.5',
