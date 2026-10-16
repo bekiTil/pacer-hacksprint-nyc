@@ -9,16 +9,23 @@ import { getScorecard } from './scorecard';
 export const RESERVE_FRACTION = 0.3; // budget held back for escalations
 const PLAN_OUTPUT_TOKENS = 600;
 const LEARNED_MIN_RUNS = 2;
-const LEARNED_MIN_PASS = 0.8;
+// Starting cheap and escalating on failure beats starting expensive whenever the cheap tier passes
+// at least about half the time, so that is the bar for "start here".
+const LEARNED_MIN_PASS = 0.5;
+const LEARNED_SKIP_PLAN_PASS = 0.8;
 
 function coldImplementTier(difficulty: Difficulty): Tier {
-  return difficulty <= 3 ? 'haiku' : difficulty === 4 ? 'sonnet' : 'opus';
+  return difficulty <= 3 ? 'haiku' : 'sonnet'; // opus is only reached by escalation
 }
 
-/** Cheapest tier the scorecard trusts for this task type, else null (fall back to cold). */
+function entry(scorecard: ScorecardEntry[], taskType: TaskType, tier: Tier) {
+  return scorecard.find((s) => s.taskType === taskType && s.tier === tier);
+}
+
+/** Cheapest tier with enough history that passes this task type at least half the time, else null (cold). */
 export function learnedTier(scorecard: ScorecardEntry[], taskType: TaskType): Tier | null {
   for (const tier of TIER_ORDER) {
-    const e = scorecard.find((s) => s.taskType === taskType && s.tier === tier);
+    const e = entry(scorecard, taskType, tier);
     if (e && e.runs >= LEARNED_MIN_RUNS && e.passRate >= LEARNED_MIN_PASS) return tier;
   }
   return null;
@@ -47,10 +54,14 @@ export function buildPlan(
   } else {
     const learned = strategy === 'pacer-learned' ? learnedTier(scorecard, profile.taskType) : null;
     implTier = learned ?? coldImplementTier(profile.difficulty);
-    withPlan = profile.needsPlan && profile.difficulty >= 3;
+    // A separate Sonnet plan only pays off on hard tasks, and not when history says the
+    // starting tier already handles this task type on its own.
+    const reliable = learned && (entry(scorecard, profile.taskType, learned)?.passRate ?? 0) >= LEARNED_SKIP_PLAN_PASS;
+    withPlan = profile.needsPlan && profile.difficulty >= 4 && !reliable;
+    const e = learned ? entry(scorecard, profile.taskType, learned) : undefined;
     reasons.push(
-      learned
-        ? `scorecard: ${learned} passes ${profile.taskType} tasks reliably`
+      learned && e
+        ? `scorecard: ${learned} passed ${Math.round(e.passRate * 100)}% of ${e.runs} ${profile.taskType} runs → start ${learned}`
         : `difficulty ${profile.difficulty}/5 → start ${implTier}`,
     );
     if (withPlan) reasons.push('sonnet writes a short plan first');
