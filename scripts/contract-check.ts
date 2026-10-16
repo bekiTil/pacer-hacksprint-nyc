@@ -8,7 +8,7 @@ import { loadTask, loadTasks } from '../core/tasks';
 import { executor } from '../core/executor';
 import { planTask } from '../core/planner';
 import { runTests } from '../core/sandbox';
-import { recordResult, getScorecard } from '../core/scorecard';
+import { getScorecard } from '../core/scorecard';
 import { initTracing, shutdownTracing, withSpan } from '../core/tracing';
 
 const live = process.argv.includes('--live'); // --live also calls Bedrock/Daytona-backed functions
@@ -52,7 +52,7 @@ async function main() {
     check('RunResult fields', !!r.runId && r.taskId === task.id && STRATEGIES.includes(r.strategy) && r.tiersTried.length > 0);
     check('RunResult cost matches step_end sum', Math.abs(
       events.reduce((s, e) => s + (e.kind === 'step_end' ? e.costUsd : 0), 0) - r.totalCostUsd) < 1e-9);
-    await recordResult(r);
+    // recordResult is not called here: it would write mock runs into the real scorecard.
   }
   check('every escalate goes up one tier', events.every((e) => e.kind !== 'escalate' || nextTier(e.from) === e.to));
 

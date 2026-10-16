@@ -47,3 +47,4 @@ next-env.d.ts
 # pacer runtime data (results.json is committed on purpose)
 data/runs.jsonl
 !.env.example
+data/scorecard.json
