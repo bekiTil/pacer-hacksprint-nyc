@@ -1,0 +1,8 @@
+{
+  "id": "01-boilerplate-stack",
+  "title": "Implement a Stack class",
+  "type": "boilerplate",
+  "difficulty": 1,
+  "prompt": "Implement the Stack class in stack.py. It needs push(x), pop() (raises IndexError when empty), peek() (raises IndexError when empty), is_empty() and size(). Use a list internally.",
+  "testCmd": "python -m pytest -q"
+}

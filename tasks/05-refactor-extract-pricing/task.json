@@ -1,0 +1,8 @@
+{
+  "id": "05-refactor-extract-pricing",
+  "title": "Extract pricing into its own module",
+  "type": "refactor",
+  "difficulty": 3,
+  "prompt": "checkout.py computes the order total inline. Extract the money math into a new module pricing.py exposing calculate_total(items, coupon=None), where items is a list of dicts with 'price' and 'qty', and coupon is an optional percent off (e.g. 10 means 10%). checkout.py's checkout(items, coupon=None) must import and use pricing.calculate_total and keep returning the same rounded-to-cents float. Behaviour must not change.",
+  "testCmd": "python -m pytest -q"
+}

@@ -1,0 +1,8 @@
+{
+  "id": "11-docs-geometry",
+  "title": "Document geometry helpers",
+  "type": "docs",
+  "difficulty": 1,
+  "prompt": "geometry.py has three working functions (area_circle, area_rectangle, area_triangle) with no docstrings. Add a clear docstring to each. Every docstring must describe the parameters (mention the parameter names) and state what the function returns. Do not change any behaviour.",
+  "testCmd": "python -m pytest -q"
+}

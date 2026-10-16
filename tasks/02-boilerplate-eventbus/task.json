@@ -1,0 +1,8 @@
+{
+  "id": "02-boilerplate-eventbus",
+  "title": "Build a tiny EventBus",
+  "type": "boilerplate",
+  "difficulty": 3,
+  "prompt": "Implement an in-memory publish/subscribe EventBus across events.py and bus.py. events.py defines an Event dataclass with `name` (str) and `payload` (dict). bus.py defines EventBus with subscribe(name, handler), unsubscribe(name, handler), and publish(event) which calls every handler subscribed to event.name with the event, in subscription order. Unknown event names are a no-op.",
+  "testCmd": "python -m pytest -q"
+}
