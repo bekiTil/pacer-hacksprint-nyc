@@ -1,0 +1,6 @@
+{
+  "name": "pacer",
+  "description": "Budget-aware model planner for coding tasks: plan across Haiku/Sonnet/Opus, test in a Daytona sandbox, escalate a tier only when tests fail, and log the run (cost, pass/fail, traces) to Arize.",
+  "version": "0.1.0",
+  "author": { "name": "Yared & Bereket" }
+}
