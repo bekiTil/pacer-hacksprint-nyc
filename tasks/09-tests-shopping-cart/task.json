@@ -1,0 +1,8 @@
+{
+  "id": "09-tests-shopping-cart",
+  "title": "Write tests for ShoppingCart",
+  "type": "tests",
+  "difficulty": 2,
+  "prompt": "shopping_cart.py has a working ShoppingCart class (add(name, price, qty), remove(name), total(), apply_discount(percent)). Write a test file named exactly test_shopping_cart.py with at least 4 test functions (names starting with test_) that cover: adding items and total, removing an item, applying a percentage discount, and removing a name that is not present (should be a no-op). Your tests must pass against the given implementation.",
+  "testCmd": "python -m pytest -q"
+}

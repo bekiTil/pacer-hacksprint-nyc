@@ -1,0 +1,8 @@
+{
+  "id": "10-tests-validator",
+  "title": "Write tests for a form validator",
+  "type": "tests",
+  "difficulty": 4,
+  "prompt": "validator.py exposes validate(form) which returns a list of error strings using the predicates in rules.py. A form is a dict with keys 'email', 'age', 'username'. Write a test file named exactly test_validator.py with at least 6 test functions covering: a fully valid form (no errors), a missing/empty email, an email without '@', an age below 18, a non-integer age, and a username shorter than 3 characters. Your tests must pass against the given implementation.",
+  "testCmd": "python -m pytest -q"
+}

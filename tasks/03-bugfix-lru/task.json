@@ -1,0 +1,8 @@
+{
+  "id": "03-bugfix-lru",
+  "title": "Fix LRU cache recency bug",
+  "type": "bugfix",
+  "difficulty": 2,
+  "prompt": "LRUCache in lru.py should evict the least-recently-USED key when full, where both get() and put() count as a use. It currently only tracks insertion order, so reading a key does not protect it from eviction. Fix get() and put() so recency is updated on every access.",
+  "testCmd": "python -m pytest -q"
+}

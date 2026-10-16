@@ -1,0 +1,8 @@
+{
+  "id": "04-bugfix-intervals",
+  "title": "Fix interval merging (adjacency)",
+  "type": "bugfix",
+  "difficulty": 4,
+  "prompt": "merge(intervals) in intervals.py should merge overlapping AND touching intervals, using the Interval type from models.py. Touching means the end of one equals the start of the next (e.g. [1,3] and [3,5] merge into [1,5]). It currently treats touching intervals as separate, and it also assumes the input is already sorted. Fix both: sort by start, and merge when the next start is <= the current end.",
+  "testCmd": "python -m pytest -q"
+}

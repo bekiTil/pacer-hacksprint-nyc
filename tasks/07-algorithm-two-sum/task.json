@@ -1,0 +1,8 @@
+{
+  "id": "07-algorithm-two-sum",
+  "title": "Two Sum (indices)",
+  "type": "algorithm",
+  "difficulty": 2,
+  "prompt": "Implement two_sum(nums, target) in two_sum.py. Return a tuple (i, j) with i < j such that nums[i] + nums[j] == target, or None if no pair exists. Each input has at most one answer and you may not use the same element twice. Aim for O(n).",
+  "testCmd": "python -m pytest -q"
+}
