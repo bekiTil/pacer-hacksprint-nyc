@@ -1,0 +1,8 @@
+{
+  "id": "00-example-bugfix",
+  "title": "Fix sum_to_n off-by-one",
+  "type": "bugfix",
+  "difficulty": 1,
+  "prompt": "sum_to_n(n) in mathutils.py should return 1 + 2 + ... + n (and 0 for n <= 0), but it returns the wrong value. Fix it.",
+  "testCmd": "python -m pytest -q"
+}

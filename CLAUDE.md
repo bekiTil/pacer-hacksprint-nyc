@@ -15,7 +15,9 @@ Check `git config user.name` or the conversation. **If it's unclear, ask the use
 - **Only edit files owned by your teammate's track.** If something in the other track needs to change, don't edit it. Tell your user exactly what change to ask the other person for, or leave a `// TODO(yared): ...` / `// TODO(bereket): ...` in a file *your* teammate owns.
 - **`core/types.ts` is a frozen contract.** Don't change it unless your user confirms the other teammate agreed. Build against it exactly, using the same field names and the same span attribute names listed in the README.
 - **Shared files** (`package.json`, `README.md`, `CLAUDE.md`, `.env.example`): keep edits minimal and additive (e.g. adding one dependency). Pull right before you edit and commit right after, to avoid conflicts.
-- Before 1:30 PM, the web UI uses `core/mockExecutor.ts`. After the 1:30 sync it uses `core/executor.ts`.
+- Always import `executor` from `core/executor.ts` (it re-exports the mock until Yared swaps in the real engine at the 1:30 sync).
+- Every cross-track function already exists with its final signature (some bodies are stubs). Never change a signature. Replace only stub bodies in files you own.
+- Before pushing changes in `core/`: `npm run typecheck && npm run contract` must pass.
 - `git pull --rebase` before every push. Small commits straight to `main`, prefixed `[engine]`, `[ui]`, `[arize]`, `[plugin]`, or `[tasks]`.
 - Never commit secrets (`.env.local`).
 

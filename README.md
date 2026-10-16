@@ -50,7 +50,9 @@ Two ways to use it: a **web app** (live run timeline and results dashboard) and 
 ## Setup
 
 ```bash
+nvm use 22                     # Node 22+
 npm install
+npm run typecheck && npm run contract   # verifies both tracks still fit together
 cp .env.example .env.local     # fill in the keys below
 npm run dev                    # web app → http://localhost:3000
 npx tsx scripts/bench.ts       # benchmark: 12 tasks × 4 strategies → data/results.json
@@ -78,78 +80,23 @@ ARIZE_PROJECT_NAME=pacer
 | Track | **Engine**: Bedrock, Daytona, planning, scorecard, benchmark | **Experience + Observability**: Arize, benchmark tasks, web UI, Claude Code plugin, judge evals |
 | Owns (may edit) | `core/models.ts`, `core/profiler.ts`, `core/planner.ts`, `core/sandbox.ts`, `core/executor.ts`, `core/scorecard.ts`, `scripts/bench.ts`, `data/` | `app/**`, `instrumentation.ts`, `plugin/**`, `tasks/**`, `core/tasks.ts`, `core/tracing.ts`, `core/mockExecutor.ts`, `scripts/judge.ts` |
 | Must NOT edit | anything in Bereket's column | anything in Yared's column |
-| Shared (both must agree before changing) | `core/types.ts`, `package.json`, `README.md`, `CLAUDE.md`, `.env.example` | same |
+| Shared (both must agree before changing) | `core/types.ts`, `core/env.ts`, `scripts/contract-check.ts`, `package.json`, `README.md`, `CLAUDE.md`, `.env.example`, `tasks/00-example-bugfix/` (format reference) | same |
 
 **Rule:** if you need something changed in the other person's file, tell them (or leave a `// TODO(yared):` / `// TODO(bereket):` comment in *your own* file and message them). Don't edit their file yourself.
 
-## The contract: `core/types.ts` (frozen after 11:35)
+## The contract: `core/types.ts` (frozen; it's the source of truth, not this README)
 
-Both tracks build against these types. Bereket builds the UI and plugin against `mockExecutor` until Yared's real executor is ready at the 1:30 sync. Changing this file needs a message to the other person **before** you push.
+**Already in the repo:** every cross-track function exists with its **final signature**. Some bodies are still stubs; each owner replaces their stub bodies without changing the signatures. So both of you can build and run against the other's code from minute one.
 
-```ts
-export type Tier = 'haiku' | 'sonnet' | 'opus';
-export type TaskType = 'boilerplate' | 'refactor' | 'bugfix' | 'algorithm' | 'tests' | 'docs';
-export type Strategy = 'all-opus' | 'all-haiku' | 'pacer-cold' | 'pacer-learned';
-export type Client = 'web' | 'claude-code' | 'bench';
+- `core/types.ts`: all shared types. Key ones: `BenchTask`, `Plan`, `Step`, `RunEvent`, `RunOptions`, `RunResult` (includes `tiersTried`), `ScorecardEntry`, `JudgedResult`, `RunRequest`, `TestRunResult`.
+- **`ATTR`**: the Arize span attribute keys. Always use `ATTR.costUsd` etc., never string literals.
+- **`DATA`**: data file paths (`data/runs.jsonl`, `data/scorecard.json`, `data/results.json`, `data/judged.json`).
+- **`STRATEGIES`, `TASK_TYPES`, `TIER_ORDER`**: the canonical lists for UI dropdowns and loops.
+- **SSE wire format** (`POST /api/run` with a `RunRequest` body): each message is `data: <JSON RunEvent>\n\n`. The stream always ends with a `done` or `error` event.
+- **Event order** guaranteed by any executor: `plan` first. Then for each step, `step_start` → `step_end`. After each implement/fix, a `test` event. On failure, `escalate` (always exactly one tier up). Last comes `done` (or `error`). `done.result.totalCostUsd` = the sum of all `step_end.costUsd`.
+- **`core/executor.ts` currently re-exports `mockExecutor`.** Everyone (UI, bench) imports `executor` from `core/executor.ts`. At the 1:30 sync Yared swaps in the real one, and no other file changes.
 
-export interface BenchTask {
-  id: string;                          // folder name under tasks/
-  title: string;
-  type: TaskType;
-  difficulty: 1 | 2 | 3 | 4 | 5;       // human label, used for analysis only
-  prompt: string;                      // what the agent is asked to do
-  files: Record<string, string>;       // starter files, visible to the model (path → content)
-  testFiles: Record<string, string>;   // hidden tests, uploaded only to the sandbox
-  testCmd: string;                     // e.g. "python -m pytest -q"
-}
-
-export interface Step {
-  name: 'plan' | 'implement' | 'fix';
-  tier: Tier;
-  estTokens: number;
-}
-
-export interface Plan {
-  taskType: TaskType;
-  difficulty: 1 | 2 | 3 | 4 | 5;      // profiler's estimate
-  steps: Step[];
-  estCostUsd: number;
-  budgetUsd: number;
-  reason: string;                      // one line: why these tiers (shown in UI)
-}
-
-export type RunEvent =
-  | { kind: 'plan'; plan: Plan }
-  | { kind: 'step_start'; step: Step['name']; tier: Tier }
-  | { kind: 'step_end'; step: Step['name']; tier: Tier; tokensIn: number; tokensOut: number; costUsd: number; handoff: string }
-  | { kind: 'test'; tier: Tier; passed: boolean; output: string }   // output truncated to ~2k chars
-  | { kind: 'escalate'; from: Tier; to: Tier; reason: string }
-  | { kind: 'error'; message: string }
-  | { kind: 'done'; result: RunResult };
-
-export interface RunOptions { budgetUsd: number; strategy: Strategy; client: Client }
-
-export interface RunResult {
-  runId: string;
-  taskId: string;
-  taskType: TaskType;
-  strategy: Strategy;
-  client: Client;
-  passed: boolean;
-  totalCostUsd: number;
-  totalTokens: number;
-  escalations: number;
-  finalTier: Tier;
-  durationMs: number;
-  files: Record<string, string>;       // final code (judge.ts reads this)
-}
-
-export interface ScorecardEntry { taskType: TaskType; tier: Tier; runs: number; passRate: number; avgCostUsd: number }
-
-export interface Executor {
-  run(task: BenchTask, opts: RunOptions): AsyncIterable<RunEvent>;
-}
-```
+**Before every push that touches `core/`:** `npm run typecheck && npm run contract` must pass. `npm run contract -- --live` also calls the real Bedrock/Daytona-backed `planTask`/`runTests`.
 
 ### Functions Yared's core exports (the plugin and UI call these)
 | Function | File | Used by |
@@ -164,8 +111,8 @@ export interface Executor {
 | Function | File | Used by |
 |---|---|---|
 | `loadTasks(): BenchTask[]`, `loadTask(id): BenchTask` | `core/tasks.ts` | bench, web, judge |
-| `initTracing(serviceName: string)`, `withSpan(name, attrs, fn)` | `core/tracing.ts` | executor (Yared wraps steps/tests in `withSpan`), bench, MCP server |
-| `mockExecutor: Executor` | `core/mockExecutor.ts` | web UI before 1:30 |
+| `initTracing(serviceName)`, `shutdownTracing()`, `withSpan<T>(name, attrs: SpanAttrs, fn: (span: SpanHandle) => Promise<T>): Promise<T>` | `core/tracing.ts` | executor (Yared wraps steps/tests in `withSpan`), bench, MCP server. `withSpan` already creates real OTel spans. Bereket only needs to wire the exporter. |
+| `mockExecutor: Executor` | `core/mockExecutor.ts` | re-exported by `core/executor.ts` until 1:30 (already written, emits one escalation) |
 
 **Span attribute names (both use exactly these):** `pacer.strategy`, `pacer.client`, `pacer.run_id`, `task.id`, `task.type`, `model.tier`, `cost.usd`, `tokens.in`, `tokens.out`, `tests.passed`, `pacer.escalated`. LLM calls use `experimental_telemetry: { isEnabled: true, functionId: '<step name>' }`.
 
@@ -175,7 +122,7 @@ export interface Executor {
 
 ### Y0. Setup together (11:15–11:35)
 - [ ] Enable Bedrock model access for Claude Haiku, Sonnet, Opus. Run `aws bedrock list-inference-profiles --region us-east-1 | grep -i claude` and put the exact IDs in `core/models.ts`.
-- [ ] Both agree on and commit `core/types.ts` (above). From then on it's **frozen**.
+- [x] `core/types.ts`, stubs for all cross-track functions, `scripts/contract-check.ts` committed (done by Yared, 11:40)
 
 ### Y1. `core/models.ts` (11:35–11:45)
 - [ ] `TIERS: Record<Tier, { modelId: string; inPerMTok: number; outPerMTok: number }>` with Bedrock pricing
@@ -210,7 +157,7 @@ export interface Executor {
   6. Yield `done` with `RunResult`, then call `recordResult`
 - [ ] Every step wrapped in `withSpan` with the agreed attributes
 - [ ] Baselines (`all-*`) still get **one** fix retry on the same tier, so the comparison is fair
-- ✅ **Done when:** `npx tsx scripts/run-one.ts <taskId> pacer-cold` streams events to the console and passes on 2 tasks, one with an escalation. **→ 1:30 SYNC: tell Bereket to switch the UI from mockExecutor to executor.**
+- ✅ **Done when:** `npx tsx scripts/run-one.ts <taskId> pacer-cold` streams events to the console and passes on 2 tasks, one with an escalation. **→ 1:30 SYNC: change `core/executor.ts` to export the real executor and tell Bereket.**
 
 ### Y5. `core/scorecard.ts` (1:30–2:00)
 - [ ] `recordResult` appends to `data/runs.jsonl` and recomputes `data/scorecard.json` (per taskType × tier: runs, passRate, avgCostUsd). Count a tier as "tried" for every tier a run touched: a fail on the lower tier, a pass on the tier where it ended.
@@ -229,7 +176,8 @@ export interface Executor {
 
 ### B0. Setup together (11:15–11:35)
 - [ ] Repo, `create-next-app` (TS, App Router, Tailwind), install deps, `.env.example`, Arize space and keys
-- [ ] Commit `core/types.ts` with Yared, then write `core/mockExecutor.ts` (fake events with delays, including one escalation)
+- [x] Next.js scaffold, deps, `.env.example`, `core/types.ts`, `core/mockExecutor.ts`, `core/tasks.ts` loader, example task: **already committed by Yared. Don't re-run create-next-app, just `git pull && npm install`.**
+- [ ] Arize space + keys, put them in `.env.local`
 
 ### B1. `tasks/` + `core/tasks.ts` (11:35–12:20, **hand off to Yared by 12:20**)
 - [ ] 12 Python tasks, 2 per TaskType, difficulty spread 1–5. Include at least 3 multi-file tasks (refactor/bugfix across 2–3 files) and 2 genuinely hard ones (difficulty 5) that Haiku should fail.
@@ -292,6 +240,8 @@ export interface Executor {
 ## Git workflow
 - One repo, commit straight to `main`, **small commits, often**. `git pull --rebase` before every push.
 - Only edit files in your own column (see the ownership table). Conflicts should then only happen in shared files.
+- Run `npm run typecheck && npm run contract` before pushing anything in `core/`.
+- Need a new dependency? `git pull` → `npm install <pkg>` → commit `package.json` + `package-lock.json` immediately, alone, so the lockfile doesn't conflict.
 - Commit message prefix: `[engine]` (Yared) or `[ui]` / `[arize]` / `[plugin]` / `[tasks]` (Bereket).
 - Never commit `.env.local` or keys.
 
