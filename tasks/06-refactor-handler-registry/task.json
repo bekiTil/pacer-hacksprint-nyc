@@ -1,0 +1,8 @@
+{
+  "id": "06-refactor-handler-registry",
+  "title": "Replace if/elif dispatch with a registry",
+  "type": "refactor",
+  "difficulty": 5,
+  "prompt": "handlers.py dispatches commands with a long if/elif chain inside run(name, value). Refactor into an extensible registry in registry.py exposing a decorator register(name) and a function dispatch(name, value). Moving a command to a @register('x')-decorated function must keep run() working, and dispatch must raise KeyError('unknown command: <name>') for names that were never registered. Register the existing commands ('upper', 'double', 'negate') and make run() delegate to dispatch so new commands can be added from other modules at import time without editing run().",
+  "testCmd": "python -m pytest -q"
+}

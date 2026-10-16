@@ -1,0 +1,8 @@
+{
+  "id": "08-algorithm-weighted-schedule",
+  "title": "Weighted interval scheduling (max profit)",
+  "type": "algorithm",
+  "difficulty": 5,
+  "prompt": "Implement max_profit(jobs) in schedule.py. jobs is a list of (start, end, profit) tuples. Choose a subset of mutually non-overlapping jobs (a job ending at time t does not overlap one starting at t) that maximizes total profit, and return that maximum profit. Must handle up to ~10000 jobs efficiently (sort + binary search + DP, not brute force).",
+  "testCmd": "python -m pytest -q"
+}

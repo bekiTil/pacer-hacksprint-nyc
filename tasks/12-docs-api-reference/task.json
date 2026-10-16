@@ -1,0 +1,8 @@
+{
+  "id": "12-docs-api-reference",
+  "title": "Add Args/Returns docstrings to the API",
+  "type": "docs",
+  "difficulty": 3,
+  "prompt": "api.py has a module of public functions with no documentation. Add a module-level docstring, and give every public function (one whose name does not start with '_') a Google-style docstring containing an 'Args:' section and a 'Returns:' section. Do not change behaviour and do not document the private helper.",
+  "testCmd": "python -m pytest -q"
+}
